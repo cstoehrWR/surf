@@ -1,0 +1,51 @@
+{
+  "brand": "North Sea Surf School",
+  "tagline": "Wellen. Wind. Nordsee.",
+  "bookNow": "Jetzt buchen",
+  "login": "Anmelden",
+  "logout": "Abmelden",
+  "steps": {
+    "location": "Standort",
+    "product": "Kurs",
+    "date": "Datum",
+    "time": "Uhrzeit",
+    "count": "Teilnehmerzahl",
+    "participants": "Teilnehmerdaten",
+    "addons": "Zusatzleistungen",
+    "terms": "Bedingungen",
+    "payment": "Zahlung",
+    "done": "Bestätigung"
+  },
+  "availability": {
+    "spots": "freie Plätze",
+    "full": "Ausgebucht",
+    "missing": "Ressourcen fehlen"
+  },
+  "consent": {
+    "agb": "Ich akzeptiere die AGB.",
+    "privacy": "Ich habe die Datenschutzerklärung gelesen.",
+    "participation": "Ich akzeptiere die Teilnahmebedingungen."
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "planner": "Session Planner",
+    "calendar": "Kalender",
+    "bookings": "Buchungen",
+    "products": "Produkte",
+    "sessions": "Sessions",
+    "instructors": "Surflehrer",
+    "resources": "Ressourcen",
+    "customers": "Kunden",
+    "reports": "Reports"
+  },
+  "kpis": {
+    "sessions": "Sessions",
+    "participants": "Teilnehmer",
+    "occupancy": "Auslastung",
+    "revenue": "Umsatz",
+    "openPayments": "offene Zahlungen",
+    "missingWaivers": "fehlende Waiver",
+    "missingData": "fehlende Teilnehmerdaten",
+    "resourceIssues": "Ressourcenprobleme"
+  }
+}

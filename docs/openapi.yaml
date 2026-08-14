@@ -1,0 +1,130 @@
+openapi: 3.0.3
+info:
+  title: North Sea Surf School API
+  version: "1.0.0"
+  description: REST API für Buchung, Verfügbarkeit und Backoffice der Surfschul-Plattform.
+servers:
+  - url: /api
+paths:
+  /health:
+    get:
+      summary: Healthcheck
+      responses:
+        "200":
+          description: OK
+  /products:
+    get:
+      summary: Öffentliche Produktliste
+      parameters:
+        - in: query
+          name: locationId
+          schema: { type: string }
+      responses:
+        "200": { description: Produktliste }
+  /products/{id}:
+    get:
+      summary: Produktdetail
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Produkt }
+  /availability:
+    get:
+      summary: Verfügbare Zeiten und Kapazitäten
+      parameters:
+        - in: query
+          name: productId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: locationId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: date
+          required: true
+          schema: { type: string, example: "2026-08-14" }
+        - in: query
+          name: participants
+          schema: { type: integer, default: 1 }
+      responses:
+        "200":
+          description: Slots mit availableSlots, Preis und fehlenden Ressourcen
+  /bookings:
+    get:
+      summary: Buchungen (Auth oder token)
+      post:
+        summary: Buchung anlegen
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateBooking"
+        responses:
+          "201": { description: Booking created }
+          "409": { description: Not available }
+  /bookings/{id}:
+    get:
+      summary: Buchungsdetail
+    patch:
+      summary: Buchung ändern
+  /bookings/{id}/cancel:
+    post:
+      summary: Buchung stornieren
+  /bookings/{id}/checkin:
+    post:
+      summary: Teilnehmer einchecken
+  /sessions:
+    get:
+      summary: Sessions listen
+    post:
+      summary: Session anlegen
+  /sessions/{id}:
+    patch:
+      summary: Session aktualisieren (inkl. Drag-and-drop Zeitverschiebung)
+  /resources:
+    get:
+      summary: Ressourcenliste
+  /customers/{id}:
+    get:
+      summary: Kundendetail
+  /payments:
+    post:
+      summary: Zahlung starten (Stripe, Bar, Manuell, Mock)
+  /reports:
+    get:
+      summary: Reports inkl. CSV
+      parameters:
+        - in: query
+          name: format
+          schema: { type: string, enum: [json, csv] }
+  /dashboard:
+    get:
+      summary: Admin-Dashboard Kennzahlen
+components:
+  schemas:
+    CreateBooking:
+      type: object
+      required: [productId, locationId, date, startTime, participants, customer, consents]
+      properties:
+        productId: { type: string }
+        variantId: { type: string }
+        locationId: { type: string }
+        date: { type: string }
+        startTime: { type: string, example: "10:00" }
+        participants:
+          type: array
+          items:
+            type: object
+            required: [firstName, lastName]
+        customer:
+          type: object
+          required: [firstName, lastName, email]
+        consents:
+          type: object
+          required: [agb, privacy, participation]
+        overrideReason: { type: string }
