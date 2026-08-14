@@ -6,10 +6,8 @@ import { notFound } from "next/navigation";
 
 export default async function ConfirmationPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ number: string }>;
-  searchParams: Promise<{ paid?: string; token?: string }>;
 }) {
   const { number } = await params;
   const booking = await prisma.booking.findUnique({

@@ -9,7 +9,6 @@ export async function GET(request: NextRequest) {
   const user = await requireUser().catch(() => null);
   const url = new URL(request.url);
   const token = url.searchParams.get("token");
-  const number = url.searchParams.get("number");
 
   if (token) {
     const booking = await prisma.booking.findUnique({
@@ -53,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     const booking = await createBooking({
       ...parsed.data,
-      date: new Date(`${parsed.data.date}T00:00:00`),
+      date: new Date(`${parsed.data.date}T12:00:00`),
       actorUserId,
       ip: request.headers.get("x-forwarded-for") ?? undefined,
     });

@@ -214,7 +214,6 @@ export function computeAvailability(input: AvailabilityInput): AvailabilityResul
   }
 
   const uniqueReasons = [...new Set(reasons)];
-  const hardBlockers = uniqueReasons.filter((r) => r !== "insufficient_capacity" || availableSlots <= 0);
 
   return {
     available:

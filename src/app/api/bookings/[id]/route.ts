@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { patchBookingSchema } from "@/lib/validation/schemas";
 import { handleError, jsonError, requirePermission, requireUser } from "@/lib/api/guard";
-import { cancelBooking } from "@/lib/booking/service";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;

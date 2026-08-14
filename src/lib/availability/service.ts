@@ -196,7 +196,7 @@ export async function getAvailability(params: {
   return {
     productId: product.id,
     locationId: params.locationId,
-    date: params.date.toISOString().slice(0, 10),
+    date: params.date.toLocaleDateString("en-CA"),
     participants: params.participants,
     slots,
   };

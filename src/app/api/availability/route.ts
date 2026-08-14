@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   });
   if (!parsed.success) return jsonError("Invalid query", 400, parsed.error.flatten());
 
-  const date = new Date(`${parsed.data.date}T00:00:00`);
+  const date = new Date(`${parsed.data.date}T12:00:00`);
   const result = await getAvailability({
     productId: parsed.data.productId,
     locationId: parsed.data.locationId,

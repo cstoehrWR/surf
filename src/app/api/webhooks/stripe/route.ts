@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { confirmBookingPayment } from "@/lib/booking/service";
 import { logger } from "@/lib/logger";
 
