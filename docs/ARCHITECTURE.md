@@ -161,11 +161,13 @@ tests/                 Vitest (Engine) + API-Tests
 
 ---
 
-## 8. MVP-Abgrenzung (Release 1)
+## 8. MVP-Abgrenzung (Release 1 + Release 2)
 
-**Im MVP lauffähig:** Auth, RBAC, Org/Standort, Produkte/Varianten, Sessions, Kunden/Teilnehmer, Availability Engine, öffentliches Booking, einfache Preise, Stripe/Mock-Zahlung, Bestätigung, Admin-Dashboard, Session Planner (Tag/Woche, Drag-and-drop).
+**Release 1:** Auth, RBAC, Org/Standort, Produkte/Varianten, Sessions, Kunden/Teilnehmer, Availability Engine, öffentliches Booking, einfache Preise, Stripe/Mock-Zahlung, Bestätigung, Admin-Dashboard, Session Planner.
 
-**Schema vorhanden, UI/Logik später:** Customer Portal (Basis-Link schon da), Waiver-Vollflow, Materialausgabe, E-Mail-Automation, Gutscheine, Advanced Pricing, Warteliste, Partnerportal, Reporting-CSV, Webhooks-Dispatch, Multi-Sport.
+**Release 2 (umgesetzt):** Customer Portal (Teilnehmerdaten, Storno mit Frist, Restzahlung), digitale Waiver (Vorlagen, Guardian, Unveränderlichkeit, Version), Admin-Waiver-Übersicht, E-Mail-Templates Storno/Waiver.
+
+**Später:** Materialausgabe-Vollflow, E-Mail-Automation-Jobs, Gutscheine, Advanced Pricing, Warteliste, Partnerportal.
 
 ---
 

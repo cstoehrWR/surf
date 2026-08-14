@@ -13,6 +13,7 @@ const links = [
   ["/admin/instructors", "Surflehrer"],
   ["/admin/resources", "Ressourcen"],
   ["/admin/customers", "Kunden"],
+  ["/admin/waivers", "Waiver"],
   ["/admin/reports", "Reports"],
 ];
 
