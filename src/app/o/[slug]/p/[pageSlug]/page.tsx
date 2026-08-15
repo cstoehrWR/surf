@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getPublicSite, ensureSiteForOrganization } from "@/lib/site/service";
 import { TenantSiteShell, renderBlocks } from "@/components/site/tenant-site";
@@ -19,6 +20,7 @@ export default async function OrgCmsPage({
 
   const page = org.sitePages.find((p) => p.slug === pageSlug);
   if (!page) notFound();
+  const customDomain = (await headers()).get("x-tenant-custom-domain") === "1";
 
   const pages = org.sitePages.map((p) => ({
     ...p,
@@ -26,10 +28,11 @@ export default async function OrgCmsPage({
   }));
 
   return (
-    <TenantSiteShell org={org} pages={pages} activeSlug={pageSlug}>
+    <TenantSiteShell org={org} pages={pages} activeSlug={pageSlug} customDomain={customDomain}>
       {renderBlocks(
         org,
         page.blocks.map((b) => ({ ...b, content: b.content as Record<string, unknown> })),
+        customDomain,
       )}
     </TenantSiteShell>
   );

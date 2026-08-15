@@ -26,7 +26,12 @@ export async function GET() {
       orderBy: { sortOrder: "asc" },
     });
     return NextResponse.json({
-      data: { site, pages, publicUrl: `/o/${org.slug}` },
+      data: {
+        site,
+        pages,
+        publicUrl: site.customDomain ? `https://${site.customDomain}` : `/o/${org.slug}`,
+        platformUrl: `/o/${org.slug}`,
+      },
     });
   } catch (error) {
     return handleError(error);
@@ -84,16 +89,39 @@ export async function PATCH(request: NextRequest) {
 
     if (body.action === "addBlock") {
       const pageId = z.string().parse(body.pageId);
+      const type = String(body.type ?? "TEXT");
+      const { BLOCK_TEMPLATES } = await import("@/lib/site/domain");
       const count = await prisma.siteBlock.count({ where: { pageId } });
       const block = await prisma.siteBlock.create({
         data: {
           pageId,
-          type: body.type ?? "TEXT",
+          type,
           sortOrder: count,
-          content: (body.content ?? { title: "Neuer Abschnitt", body: "" }) as Prisma.InputJsonValue,
+          content: (body.content ?? BLOCK_TEMPLATES[type] ?? BLOCK_TEMPLATES.TEXT) as Prisma.InputJsonValue,
         },
       });
       return NextResponse.json({ data: block }, { status: 201 });
+    }
+
+    if (body.action === "moveBlock") {
+      const blockId = z.string().parse(body.blockId);
+      const direction = z.enum(["up", "down"]).parse(body.direction);
+      const block = await prisma.siteBlock.findUniqueOrThrow({ where: { id: blockId } });
+      const siblings = await prisma.siteBlock.findMany({
+        where: { pageId: block.pageId },
+        orderBy: { sortOrder: "asc" },
+      });
+      const idx = siblings.findIndex((b) => b.id === blockId);
+      const swapWith = direction === "up" ? idx - 1 : idx + 1;
+      if (swapWith < 0 || swapWith >= siblings.length) {
+        return NextResponse.json({ data: block });
+      }
+      const other = siblings[swapWith];
+      await prisma.$transaction([
+        prisma.siteBlock.update({ where: { id: block.id }, data: { sortOrder: other.sortOrder } }),
+        prisma.siteBlock.update({ where: { id: other.id }, data: { sortOrder: block.sortOrder } }),
+      ]);
+      return NextResponse.json({ data: { ok: true } });
     }
 
     if (body.action === "deleteBlock") {
@@ -129,9 +157,19 @@ export async function PATCH(request: NextRequest) {
 
     const parsed = settingsSchema.safeParse(body);
     if (!parsed.success) return jsonError("Invalid payload", 400, parsed.error.flatten());
+    const data = { ...parsed.data };
+    if (typeof data.customDomain === "string") {
+      data.customDomain = data.customDomain
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\//, "")
+        .replace(/\/$/, "")
+        .replace(/^www\./, "");
+      if (!data.customDomain) data.customDomain = null;
+    }
     const site = await prisma.siteSettings.update({
       where: { organizationId: orgId },
-      data: parsed.data,
+      data: data,
     });
     return NextResponse.json({ data: site });
   } catch (error) {

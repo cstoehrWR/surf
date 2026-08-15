@@ -63,7 +63,9 @@ Ohne `STRIPE_SECRET_KEY` bestätigt der Mock-Payment-Provider Buchungen direkt (
 - **Release 4 (aktuell):** Multi-Tenant-SaaS, Sportarten (Surf/Kite/SUP), Unterkunft/Camping (Nacht-Buchung)
 - **Stammdaten-Pflege:** Kurse/Produkte, Sessions, Standorte, Ressourcen/Material, Surflehrer und Unterkunftseinheiten sind im Admin anlegbar/editierbar
 - **Website-CMS:** Jede Schule kann unter `/admin/website` eine komplette Website pflegen (Seiten, Blöcke, Farben) – öffentlich unter `/o/[slug]`
-- **Später:** Partnerportal, Custom Domains, weitere Verticals
+- **Custom Domains:** Domain im Website-Editor eintragen; Middleware mappt Host → Tenant (z. B. `/book` statt `/o/slug/book`)
+- **Page Builder:** Blöcke Hero, Text, Kurse, CTA, Kontakt, FAQ, Team, Galerie, Bild + Reihenfolge
+- **Später:** Partnerportal, TLS/DNS-Automatisierung, Drag-and-drop WYSIWYG
 
 ## Multi-Tenant
 

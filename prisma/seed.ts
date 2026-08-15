@@ -1026,12 +1026,22 @@ await prisma.automationRule.createMany({
     contactEmail: "hello@wattenmeer.example",
   });
   await prisma.siteSettings.update({
+    where: { organizationId: org.id },
+    data: {
+      customDomain: "demo.northseasurf.local",
+      contactEmail: "hello@northseasurf.example",
+      contactPhone: "+49 123 456789",
+      address: "Nordstrand, Nordsee",
+    },
+  });
+  await prisma.siteSettings.update({
     where: { organizationId: stay.id },
     data: {
       primaryColor: "#0e7490",
       accentColor: "#f59e0b",
       address: "Wiesmoor Campus",
       contactEmail: "hello@wattenmeer.example",
+      customDomain: "demo.wattenmeer.local",
     },
   });
 

@@ -1,6 +1,12 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getPublicSite, ensureSiteForOrganization } from "@/lib/site/service";
 import { TenantSiteShell, renderBlocks } from "@/components/site/tenant-site";
+
+async function isCustomDomainRequest() {
+  const h = await headers();
+  return h.get("x-tenant-custom-domain") === "1";
+}
 
 export default async function OrgLandingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -19,6 +25,7 @@ export default async function OrgLandingPage({ params }: { params: Promise<{ slu
 
   const home = org.sitePages.find((p) => p.slug === "home") ?? org.sitePages[0];
   if (!home) notFound();
+  const customDomain = await isCustomDomainRequest();
 
   const pages = org.sitePages.map((p) => ({
     ...p,
@@ -29,8 +36,12 @@ export default async function OrgLandingPage({ params }: { params: Promise<{ slu
   }));
 
   return (
-    <TenantSiteShell org={org} pages={pages} activeSlug="home">
-      {renderBlocks(org, home.blocks.map((b) => ({ ...b, content: b.content as Record<string, unknown> })))}
+    <TenantSiteShell org={org} pages={pages} activeSlug="home" customDomain={customDomain}>
+      {renderBlocks(
+        org,
+        home.blocks.map((b) => ({ ...b, content: b.content as Record<string, unknown> })),
+        customDomain,
+      )}
     </TenantSiteShell>
   );
 }

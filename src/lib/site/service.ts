@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 
 export type BlockContent = Record<string, unknown>;
+export { resolveCtaHref, sitePath } from "./domain";
 
 export const DEFAULT_PAGES: Array<{
   slug: string;
@@ -37,6 +38,17 @@ export const DEFAULT_PAGES: Array<{
       },
       { type: "COURSES", content: { title: "Unsere Kurse", limit: 6 } },
       {
+        type: "GALLERY",
+        content: {
+          title: "Impressionen",
+          images: [
+            { url: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=800", alt: "Surf" },
+            { url: "https://images.unsplash.com/photo-1455729552865-3658a5d39692?w=800", alt: "Strand" },
+            { url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800", alt: "Meer" },
+          ],
+        },
+      },
+      {
         type: "CTA",
         content: {
           title: "Bereit für die nächste Session?",
@@ -61,6 +73,16 @@ export const DEFAULT_PAGES: Array<{
           body: "Erfahrene Guides, gutes Material und klare Sicherheit – damit du Fortschritte machst.",
         },
       },
+      {
+        type: "TEAM",
+        content: {
+          title: "Unser Team",
+          members: [
+            { name: "Tom", role: "Head Coach", text: "ISA Instructor, Nordsee seit 2012." },
+            { name: "Sarah", role: "Instructor", text: "Kids & Anfänger mit Herz." },
+          ],
+        },
+      },
     ],
   },
   {
@@ -72,10 +94,30 @@ export const DEFAULT_PAGES: Array<{
     blocks: [{ type: "COURSES", content: { title: "Kursangebot", limit: 20 } }],
   },
   {
+    slug: "faq",
+    title: "FAQ",
+    navLabel: "FAQ",
+    sortOrder: 4,
+    showInNav: true,
+    blocks: [
+      {
+        type: "FAQ",
+        content: {
+          title: "Häufige Fragen",
+          items: [
+            { q: "Was muss ich mitbringen?", a: "Handtuch und Wechselkleidung – Board & Neo stellen wir." },
+            { q: "Kann ich stornieren?", a: "Bis 24h vorher kostenfrei über den Portal-Link." },
+            { q: "Gibt es Verleih?", a: "Ja, Boards und Neopren auch ohne Kurs." },
+          ],
+        },
+      },
+    ],
+  },
+  {
     slug: "contact",
     title: "Kontakt",
     navLabel: "Kontakt",
-    sortOrder: 3,
+    sortOrder: 5,
     showInNav: true,
     blocks: [
       {
@@ -182,12 +224,4 @@ export async function getPublicSite(slug: string) {
     },
   });
   return org;
-}
-
-export function resolveCtaHref(orgSlug: string, href: unknown) {
-  const value = String(href ?? "book");
-  if (value.startsWith("http") || value.startsWith("/")) return value;
-  if (value === "book") return `/o/${orgSlug}/book`;
-  if (value === "stay") return `/o/${orgSlug}/stay`;
-  return `/o/${orgSlug}/${value}`;
 }

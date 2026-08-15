@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatMoney } from "@/lib/utils";
-import { resolveCtaHref } from "@/lib/site/service";
+import { resolveCtaHref, sitePath } from "@/lib/site/domain";
 
 type Org = {
   slug: string;
@@ -38,11 +38,13 @@ export function TenantSiteShell({
   pages,
   children,
   activeSlug,
+  customDomain = false,
 }: {
   org: Org;
   pages: Page[];
   children: React.ReactNode;
   activeSlug: string;
+  customDomain?: boolean;
 }) {
   const site = org.site;
   const primary = site?.primaryColor ?? "#0f766e";
@@ -53,14 +55,22 @@ export function TenantSiteShell({
     <div style={{ ["--tenant-primary" as string]: primary, ["--tenant-accent" as string]: accent }}>
       <header className="border-b border-black/5 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-          <Link href={`/o/${org.slug}`} className="text-lg font-bold" style={{ color: primary }}>
+          <Link
+            href={sitePath({ orgSlug: org.slug, customDomain, kind: "home" })}
+            className="text-lg font-bold"
+            style={{ color: primary }}
+          >
             {org.name}
           </Link>
           <nav className="flex flex-wrap items-center gap-3 text-sm font-medium">
             {nav.map((p) => (
               <Link
                 key={p.slug}
-                href={p.slug === "home" ? `/o/${org.slug}` : `/o/${org.slug}/p/${p.slug}`}
+                href={
+                  p.slug === "home"
+                    ? sitePath({ orgSlug: org.slug, customDomain, kind: "home" })
+                    : sitePath({ orgSlug: org.slug, customDomain, kind: "page", pageSlug: p.slug })
+                }
                 className={activeSlug === p.slug ? "underline" : "opacity-80 hover:opacity-100"}
               >
                 {p.navLabel ?? p.title}
@@ -68,7 +78,7 @@ export function TenantSiteShell({
             ))}
             {site?.showBookingCta && (
               <Link
-                href={`/o/${org.slug}/book`}
+                href={sitePath({ orgSlug: org.slug, customDomain, kind: "book" })}
                 className="rounded-xl px-4 py-2 font-semibold text-teal-950"
                 style={{ background: accent }}
               >
@@ -83,8 +93,12 @@ export function TenantSiteShell({
         <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-3 px-4 py-6 text-sm text-slate-600">
           <p>{site?.footerText ?? org.name}</p>
           <div className="flex gap-3">
-            <Link href={`/o/${org.slug}/p/imprint`}>Impressum</Link>
-            <Link href={`/o/${org.slug}/p/privacy`}>Datenschutz</Link>
+            <Link href={sitePath({ orgSlug: org.slug, customDomain, kind: "page", pageSlug: "imprint" })}>
+              Impressum
+            </Link>
+            <Link href={sitePath({ orgSlug: org.slug, customDomain, kind: "page", pageSlug: "privacy" })}>
+              Datenschutz
+            </Link>
           </div>
         </div>
       </footer>
@@ -92,7 +106,7 @@ export function TenantSiteShell({
   );
 }
 
-export function renderBlocks(org: Org, blocks: Page["blocks"]) {
+export function renderBlocks(org: Org, blocks: Page["blocks"], customDomain = false) {
   return (
     <div className="space-y-10">
       {blocks.map((block) => {
@@ -115,7 +129,7 @@ export function renderBlocks(org: Org, blocks: Page["blocks"]) {
               <p className="mt-4 max-w-xl text-lg opacity-90">{String(c.text ?? "")}</p>
               <div className="mt-8">
                 <Link
-                  href={resolveCtaHref(org.slug, c.ctaHref)}
+                  href={resolveCtaHref(org.slug, c.ctaHref, customDomain)}
                   className="inline-block rounded-2xl px-6 py-3 font-semibold text-teal-950"
                   style={{ background: org.site?.accentColor ?? "#fbbf24" }}
                 >
@@ -168,7 +182,7 @@ export function renderBlocks(org: Org, blocks: Page["blocks"]) {
               <h2 className="text-2xl font-semibold">{String(c.title ?? "")}</h2>
               <p className="mt-2 opacity-90">{String(c.text ?? "")}</p>
               <Link
-                href={resolveCtaHref(org.slug, c.ctaHref)}
+                href={resolveCtaHref(org.slug, c.ctaHref, customDomain)}
                 className="mt-4 inline-block rounded-2xl px-5 py-2.5 font-semibold text-teal-950"
                 style={{ background: org.site?.accentColor ?? "#fbbf24" }}
               >
@@ -190,6 +204,81 @@ export function renderBlocks(org: Org, blocks: Page["blocks"]) {
                 {org.site?.address && <p>Adresse: {org.site.address}</p>}
               </div>
             </section>
+          );
+        }
+        if (block.type === "FAQ") {
+          const items = Array.isArray(c.items) ? (c.items as Array<{ q: string; a: string }>) : [];
+          return (
+            <section key={block.id}>
+              <h2 className="text-2xl font-semibold" style={{ color: org.site?.primaryColor }}>
+                {String(c.title ?? "FAQ")}
+              </h2>
+              <div className="mt-4 space-y-3">
+                {items.map((item, idx) => (
+                  <details key={idx} className="rounded-2xl bg-white p-4 shadow-sm">
+                    <summary className="cursor-pointer font-semibold">{item.q}</summary>
+                    <p className="mt-2 text-sm text-slate-600">{item.a}</p>
+                  </details>
+                ))}
+              </div>
+            </section>
+          );
+        }
+        if (block.type === "TEAM") {
+          const members = Array.isArray(c.members)
+            ? (c.members as Array<{ name: string; role: string; text: string }>)
+            : [];
+          return (
+            <section key={block.id}>
+              <h2 className="text-2xl font-semibold" style={{ color: org.site?.primaryColor }}>
+                {String(c.title ?? "Team")}
+              </h2>
+              <div className="mt-4 grid gap-4 md:grid-cols-3">
+                {members.map((m, idx) => (
+                  <article key={idx} className="rounded-2xl bg-white p-5 shadow-sm">
+                    <h3 className="font-semibold">{m.name}</h3>
+                    <p className="text-xs uppercase text-slate-500">{m.role}</p>
+                    <p className="mt-2 text-sm text-slate-600">{m.text}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          );
+        }
+        if (block.type === "GALLERY") {
+          const images = Array.isArray(c.images)
+            ? (c.images as Array<{ url: string; alt?: string }>)
+            : [];
+          return (
+            <section key={block.id}>
+              <h2 className="text-2xl font-semibold" style={{ color: org.site?.primaryColor }}>
+                {String(c.title ?? "Galerie")}
+              </h2>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {images.map((img, idx) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={idx}
+                    src={img.url}
+                    alt={img.alt ?? ""}
+                    className="h-48 w-full rounded-2xl object-cover shadow-sm"
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        }
+        if (block.type === "IMAGE") {
+          return (
+            <figure key={block.id}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={String(c.url ?? "")}
+                alt={String(c.alt ?? "")}
+                className="w-full rounded-3xl object-cover shadow-sm"
+              />
+              {c.caption ? <figcaption className="mt-2 text-sm text-slate-500">{String(c.caption)}</figcaption> : null}
+            </figure>
           );
         }
         return (
