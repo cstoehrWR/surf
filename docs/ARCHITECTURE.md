@@ -167,7 +167,9 @@ tests/                 Vitest (Engine) + API-Tests
 
 **Release 2 (umgesetzt):** Customer Portal, digitale Waiver, Materialausgabe/Check-in, E-Mail-Automationen, Gutscheine, Refunds.
 
-**Später:** Advanced Pricing, Warteliste, Partnerportal, Multi-Sport.
+**Release 3 (umgesetzt):** Advanced Pricing (Wochenende/Saison/Gruppe/Frühbucher/Last Minute), Warteliste mit Auto-Promote bei Storno, Reporting (Auslastung, Instructor, Filter/CSV), Webhook-Endpoints inkl. Delivery.
+
+**Später:** Partnerportal, Multi-Sport, Multi-Tenant-SaaS.
 
 ---
 

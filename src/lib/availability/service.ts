@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { ResourceStatus, SessionStatus } from "@prisma/client";
 import { addMinutes, parseTimeToMinutes, rangesOverlap } from "@/lib/utils";
+import { calculatePrice } from "@/lib/pricing/engine";
 import {
   computeAvailability,
   type AvailabilityInput,
@@ -14,6 +15,7 @@ export type SlotAvailability = AvailabilityResult & {
   sessionId?: string;
   price: number;
   currency: string;
+  priceBreakdown?: ReturnType<typeof calculatePrice>;
 };
 
 function atTime(date: Date, time: string) {
@@ -30,12 +32,20 @@ export async function buildAvailabilityContext(params: {
   startTime: string;
   participants: number;
   now?: Date;
-}): Promise<{ input: AvailabilityInput; basePrice: number; taxRate: number; currency: string; durationMinutes: number }> {
+}): Promise<{
+  input: AvailabilityInput;
+  basePrice: number;
+  taxRate: number;
+  currency: string;
+  durationMinutes: number;
+  price: ReturnType<typeof calculatePrice>;
+}> {
   const product = await prisma.product.findUniqueOrThrow({
     where: { id: params.productId },
     include: {
       variants: true,
       requirements: { include: { resourceType: true } },
+      priceRules: true,
     },
   });
 
@@ -152,12 +162,44 @@ export async function buildAvailabilityContext(params: {
     })),
   };
 
+  const orgRules = await prisma.priceRule.findMany({
+    where: {
+      organizationId: product.organizationId,
+      productId: null,
+      active: true,
+    },
+  });
+  const mergedRules = [...product.priceRules, ...orgRules];
+
+  const variant = product.variants[0];
+  const price = calculatePrice({
+    basePrice: Number(product.basePrice),
+    variantPrice: variant ? Number(variant.price) : null,
+    participants: params.participants,
+    date: params.date,
+    now: params.now,
+    rules: mergedRules.map((r) => ({
+      type: r.type,
+      name: r.name,
+      priority: r.priority,
+      amount: r.amount ? Number(r.amount) : null,
+      percent: r.percent ? Number(r.percent) : null,
+      weekday: r.weekday,
+      minParticipants: r.minParticipants,
+      maxParticipants: r.maxParticipants,
+      validFrom: r.validFrom,
+      validTo: r.validTo,
+      active: r.active,
+    })),
+  });
+
   return {
     input,
     basePrice: Number(product.basePrice),
     taxRate: Number(product.taxRate),
     currency: "EUR",
     durationMinutes: product.durationMinutes,
+    price,
   };
 }
 
@@ -188,8 +230,9 @@ export async function getAvailability(params: {
       startsAt,
       endsAt: addMinutes(startsAt, ctx.durationMinutes),
       sessionId: ctx.input.session?.id,
-      price: ctx.basePrice,
+      price: ctx.price.unitPrice,
       currency: ctx.currency,
+      priceBreakdown: ctx.price,
     });
   }
 

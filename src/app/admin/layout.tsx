@@ -10,12 +10,15 @@ const links = [
   ["/admin/bookings/new", "Manuelle Buchung"],
   ["/admin/sessions", "Sessions"],
   ["/admin/products", "Produkte"],
+  ["/admin/pricing", "Preise"],
   ["/admin/instructors", "Surflehrer"],
   ["/admin/resources", "Ressourcen"],
   ["/admin/customers", "Kunden"],
+  ["/admin/waitlist", "Warteliste"],
   ["/admin/waivers", "Waiver"],
   ["/admin/vouchers", "Gutscheine"],
   ["/admin/automations", "Automationen"],
+  ["/admin/webhooks", "Webhooks"],
   ["/admin/reports", "Reports"],
 ];
 

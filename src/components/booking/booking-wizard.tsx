@@ -24,6 +24,7 @@ type Slot = {
   availableSlots: number;
   price: number;
   reasons: string[];
+  sessionId?: string;
   missingResources: Array<{ resourceTypeName: string; required: number; available: number }>;
 };
 
@@ -68,6 +69,8 @@ export function BookingWizard() {
   const [consents, setConsents] = useState({ agb: false, privacy: false, participation: false });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [waitlistForm, setWaitlistForm] = useState({ email: "", firstName: "", lastName: "" });
+  const [waitlistMsg, setWaitlistMsg] = useState<string | null>(null);
 
   const product = products.find((p) => p.id === productId);
   const selectedSlot = slots.find((s) => s.startTime === startTime);
@@ -272,6 +275,60 @@ export function BookingWizard() {
             </button>
           ))}
           {slots.length === 0 && <p className="text-sm text-slate-500">Keine Zeiten geladen.</p>}
+          {slots.some((s) => !s.available && s.sessionId) && (
+            <Card>
+              <h3 className="font-semibold">Warteliste</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Slot voll? Trag dich ein – bei Freigabe benachrichtigen wir dich.
+              </p>
+              <div className="mt-3 grid gap-2 md:grid-cols-3">
+                <Input
+                  placeholder="Vorname"
+                  value={waitlistForm.firstName}
+                  onChange={(e) => setWaitlistForm({ ...waitlistForm, firstName: e.target.value })}
+                />
+                <Input
+                  placeholder="Nachname"
+                  value={waitlistForm.lastName}
+                  onChange={(e) => setWaitlistForm({ ...waitlistForm, lastName: e.target.value })}
+                />
+                <Input
+                  placeholder="E-Mail"
+                  value={waitlistForm.email}
+                  onChange={(e) => setWaitlistForm({ ...waitlistForm, email: e.target.value })}
+                />
+              </div>
+              <div className="mt-3">
+                <Button
+                  disabled={busy}
+                  onClick={async () => {
+                    const full = slots.find((s) => !s.available && s.sessionId);
+                    if (!full?.sessionId) {
+                      setWaitlistMsg("Keine volle Session mit ID gefunden");
+                      return;
+                    }
+                    setBusy(true);
+                    setWaitlistMsg(null);
+                    const res = await fetch("/api/waitlist", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        sessionId: full.sessionId,
+                        ...waitlistForm,
+                        participants: count,
+                      }),
+                    });
+                    const json = await res.json();
+                    setBusy(false);
+                    setWaitlistMsg(res.ok ? "Auf der Warteliste – wir melden uns." : (json.error ?? "Fehler"));
+                  }}
+                >
+                  Auf Warteliste
+                </Button>
+              </div>
+              {waitlistMsg && <p className="mt-2 text-sm text-teal-800">{waitlistMsg}</p>}
+            </Card>
+          )}
         </div>
       )}
 

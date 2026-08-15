@@ -113,6 +113,9 @@ export default async function AdminDashboard() {
         <Box title="Warteliste">
           <p className="text-3xl font-semibold">{waitlist}</p>
           <p className="text-sm text-slate-500">Einträge</p>
+          <a className="mt-2 inline-block text-sm text-teal-800 underline" href="/admin/waitlist">
+            Verwalten
+          </a>
         </Box>
       </div>
     </div>

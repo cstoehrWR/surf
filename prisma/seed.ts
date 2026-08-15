@@ -522,6 +522,52 @@ async function main() {
       { organizationId: org.id, key: "session.reminder", locale: "de", subject: "Erinnerung: {{booking.number}}", body: "Hallo {{customer.firstName}}, dein Kurs {{booking.number}} ist am {{session.date}} um {{session.time}} in {{location.name}}." },
       { organizationId: org.id, key: "session.followup", locale: "de", subject: "Danke: {{booking.number}}", body: "Hallo {{customer.firstName}}, danke für deinen Kurs {{booking.number}} in {{location.name}}." },
       { organizationId: org.id, key: "payment.refunded", locale: "de", subject: "Rückerstattung: {{booking.number}}", body: "Hallo {{customer.firstName}}, für Buchung {{booking.number}} wurde eine Rückerstattung ausgeführt." },
+      {
+        organizationId: org.id,
+        key: "waitlist.promoted",
+        locale: "de",
+        subject: "Platz frei: {{productName}}",
+        body: "Hallo {{customer.firstName}}, für {{productName}} am {{startsAt}} ist ein Platz frei. Bitte buche innerhalb von {{holdHours}} Stunden unter /book.",
+      },
+    ],
+  });
+
+  await prisma.priceRule.createMany({
+    data: [
+      {
+        organizationId: org.id,
+        productId: anfaenger.id,
+        name: "Wochenende Anfänger",
+        type: "WEEKEND",
+        priority: 10,
+        amount: 79,
+      },
+      {
+        organizationId: org.id,
+        productId: anfaenger.id,
+        name: "Gruppenrabatt ab 4",
+        type: "GROUP",
+        priority: 20,
+        percent: 10,
+        minParticipants: 4,
+      },
+      {
+        organizationId: org.id,
+        name: "Frühbucher 14 Tage",
+        type: "EARLY_BIRD",
+        priority: 30,
+        percent: 15,
+        minParticipants: 7,
+      },
+      {
+        organizationId: org.id,
+        productId: schnupper.id,
+        name: "Last Minute",
+        type: "LAST_MINUTE",
+        priority: 40,
+        amount: 49,
+        maxParticipants: 2,
+      },
     ],
   });
 

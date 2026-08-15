@@ -43,6 +43,7 @@ const matrix: Record<Role, Permission[]> = {
     "attendance.mark",
   ],
   ADMIN: [
+    "settings.manage",
     "products.write",
     "products.read",
     "bookings.write",

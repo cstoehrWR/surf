@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { handleError, requirePermission } from "@/lib/api/guard";
-import { BookingStatus, PaymentStatus } from "@prisma/client";
+import { BookingStatus, PaymentStatus, SessionStatus } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,11 +17,15 @@ export async function GET(request: NextRequest) {
 
     const bookings = await prisma.booking.findMany({
       where: { createdAt: range, status: { not: BookingStatus.CANCELLED } },
-      include: { items: { include: { product: true } }, location: true },
+      include: {
+        items: { include: { product: true, session: { include: { instructors: { include: { instructor: true } } } } } },
+        location: true,
+      },
     });
 
     const byProduct: Record<string, number> = {};
     const byLocation: Record<string, number> = {};
+    const byInstructor: Record<string, number> = {};
     let revenue = 0;
     for (const b of bookings) {
       const total = Number(b.amountPaid);
@@ -29,6 +33,10 @@ export async function GET(request: NextRequest) {
       byLocation[b.location.name] = (byLocation[b.location.name] ?? 0) + total;
       for (const item of b.items) {
         byProduct[item.product.name] = (byProduct[item.product.name] ?? 0) + Number(item.lineTotal);
+        for (const link of item.session?.instructors ?? []) {
+          const name = `${link.instructor.firstName} ${link.instructor.lastName}`;
+          byInstructor[name] = (byInstructor[name] ?? 0) + Number(item.lineTotal);
+        }
       }
     }
 
@@ -43,14 +51,34 @@ export async function GET(request: NextRequest) {
       _sum: { total: true },
       _count: true,
     });
+    const sessions = await prisma.courseSession.findMany({
+      where: { startsAt: range, status: { not: SessionStatus.CANCELLED } },
+      include: { participants: true, product: true },
+    });
+    const occupancyByProduct: Record<string, { booked: number; capacity: number; pct: number }> = {};
+    for (const s of sessions) {
+      const key = s.product.name;
+      const cur = occupancyByProduct[key] ?? { booked: 0, capacity: 0, pct: 0 };
+      cur.booked += s.participants.length;
+      cur.capacity += s.maxParticipants;
+      occupancyByProduct[key] = cur;
+    }
+    for (const key of Object.keys(occupancyByProduct)) {
+      const cur = occupancyByProduct[key];
+      cur.pct = cur.capacity ? Math.round((cur.booked / cur.capacity) * 100) : 0;
+    }
+    const waitlist = await prisma.waitlistEntry.count({ where: { createdAt: range } });
 
     const report = {
       revenue,
       byProduct,
       byLocation,
+      byInstructor,
+      occupancyByProduct,
       bookings: bookings.length,
       cancelled,
       noShows,
+      waitlist,
       openPayments: {
         count: openPayments._count,
         amount: Number(openPayments._sum.total ?? 0),
@@ -58,7 +86,20 @@ export async function GET(request: NextRequest) {
     };
 
     if (format === "csv") {
-      const lines = ["metric,value", `revenue,${revenue}`, `bookings,${bookings.length}`, `cancelled,${cancelled}`];
+      const lines = [
+        "metric,key,value",
+        `revenue,,${revenue}`,
+        `bookings,,${bookings.length}`,
+        `cancelled,,${cancelled}`,
+        `noShows,,${noShows}`,
+        `waitlist,,${waitlist}`,
+        ...Object.entries(byProduct).map(([k, v]) => `byProduct,${JSON.stringify(k)},${v}`),
+        ...Object.entries(byLocation).map(([k, v]) => `byLocation,${JSON.stringify(k)},${v}`),
+        ...Object.entries(byInstructor).map(([k, v]) => `byInstructor,${JSON.stringify(k)},${v}`),
+        ...Object.entries(occupancyByProduct).map(
+          ([k, v]) => `occupancy,${JSON.stringify(k)},${v.pct}`,
+        ),
+      ];
       return new NextResponse(lines.join("\n"), {
         headers: { "Content-Type": "text/csv", "Content-Disposition": "attachment; filename=report.csv" },
       });

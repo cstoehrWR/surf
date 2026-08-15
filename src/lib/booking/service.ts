@@ -70,6 +70,14 @@ export async function createBooking(params: {
     where: { id: params.productId },
     include: { variants: true, priceRules: true, location: true },
   });
+  const orgRules = await prisma.priceRule.findMany({
+    where: {
+      organizationId: product.organizationId,
+      productId: null,
+      active: true,
+    },
+  });
+  const mergedRules = [...product.priceRules, ...orgRules];
 
   const count = params.participants.length;
 
@@ -132,14 +140,17 @@ export async function createBooking(params: {
       variantPrice: variant ? Number(variant.price) : null,
       participants: count,
       date: params.date,
-      rules: product.priceRules.map((r) => ({
+      rules: mergedRules.map((r) => ({
         type: r.type,
+        name: r.name,
         priority: r.priority,
         amount: r.amount ? Number(r.amount) : null,
         percent: r.percent ? Number(r.percent) : null,
         weekday: r.weekday,
         minParticipants: r.minParticipants,
         maxParticipants: r.maxParticipants,
+        validFrom: r.validFrom,
+        validTo: r.validTo,
         active: r.active,
       })),
     });
@@ -417,5 +428,9 @@ export async function cancelBooking(params: {
     event: "booking.cancelled",
     payload: { bookingId: booking.id },
   });
+
+  const { promoteWaitlistAfterCancellation } = await import("@/lib/waitlist/service");
+  await promoteWaitlistAfterCancellation(booking.id);
+
   return updated;
 }

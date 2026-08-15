@@ -58,6 +58,6 @@ Ohne `STRIPE_SECRET_KEY` bestätigt der Mock-Payment-Provider Buchungen direkt (
 ## Releases
 
 - **Release 1:** Auth, RBAC, Produkte, Sessions, Availability Engine, Buchung, Zahlung, Dashboard, Planner
-- **Release 2 (aktuell):** Customer Portal, Waiver, Materialausgabe/Check-in, E-Mail-Automationen, Gutscheine, Refunds
-- **Release 3:** Advanced Pricing, Warteliste, Reporting-Ausbau, Webhooks-Dispatch
+- **Release 2:** Customer Portal, Waiver, Materialausgabe/Check-in, E-Mail-Automationen, Gutscheine, Refunds
+- **Release 3 (aktuell):** Advanced Pricing, Warteliste, Reporting-Ausbau, Webhooks-Dispatch
 - **Release 4:** Multi-Tenant-SaaS, weitere Sportarten, Unterkunft

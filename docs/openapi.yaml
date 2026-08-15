@@ -97,11 +97,32 @@ paths:
       summary: Zahlung starten (Stripe, Bar, Manuell, Mock)
   /reports:
     get:
-      summary: Reports inkl. CSV
+      summary: Reports inkl. CSV (Umsatz, Auslastung, Instructor, Warteliste)
       parameters:
         - in: query
           name: format
           schema: { type: string, enum: [json, csv] }
+        - in: query
+          name: from
+          schema: { type: string }
+        - in: query
+          name: to
+          schema: { type: string }
+  /pricing/rules:
+    get:
+      summary: Preisregeln listen
+    post:
+      summary: Preisregel anlegen
+  /waitlist:
+    get:
+      summary: Warteliste (Auth)
+    post:
+      summary: Warteliste beitreten oder promote/remove
+  /webhooks/endpoints:
+    get:
+      summary: Webhook-Endpoints
+    post:
+      summary: Endpoint anlegen oder Queue verarbeiten
   /dashboard:
     get:
       summary: Admin-Dashboard Kennzahlen
