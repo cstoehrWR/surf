@@ -357,6 +357,8 @@ export async function confirmBookingPayment(params: {
   });
 
   const session = updated.items.find((i) => i.session)?.session;
+  const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+  const location = await prisma.location.findUnique({ where: { id: booking.locationId } });
   await sendTemplatedEmail({
     organizationId: booking.organizationId,
     to: booking.customer.email,
@@ -369,7 +371,8 @@ export async function confirmBookingPayment(params: {
       "session.time": session
         ? session.startsAt.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
         : "",
-      "location.name": "Nordstrand",
+      "location.name": location?.name ?? "",
+      "portal.url": `${appUrl}/portal/${booking.accessToken}`,
     },
   });
   await dispatchWebhook({

@@ -524,8 +524,8 @@ async function main() {
   await prisma.emailTemplate.createMany({
     data: [
       { organizationId: org.id, key: "booking.created", locale: "de", subject: "Buchung {{booking.number}} eingegangen", body: "Hallo {{customer.firstName}}, wir haben deine Buchung {{booking.number}} erhalten." },
-      { organizationId: org.id, key: "booking.confirmed", locale: "de", subject: "Bestätigt: {{booking.number}}", body: "Hallo {{customer.firstName}}, deine Buchung {{booking.number}} am {{session.date}} um {{session.time}} in {{location.name}} ist bestätigt." },
-      { organizationId: org.id, key: "booking.confirmed", locale: "en", subject: "Confirmed: {{booking.number}}", body: "Hi {{customer.firstName}}, booking {{booking.number}} on {{session.date}} at {{session.time}} in {{location.name}} is confirmed." },
+      { organizationId: org.id, key: "booking.confirmed", locale: "de", subject: "Bestätigt: {{booking.number}}", body: "Hallo {{customer.firstName}}, deine Buchung {{booking.number}} am {{session.date}} um {{session.time}} in {{location.name}} ist bestätigt.\n\nPortal: {{portal.url}}" },
+      { organizationId: org.id, key: "booking.confirmed", locale: "en", subject: "Confirmed: {{booking.number}}", body: "Hi {{customer.firstName}}, booking {{booking.number}} on {{session.date}} at {{session.time}} in {{location.name}} is confirmed.\n\nPortal: {{portal.url}}" },
       { organizationId: org.id, key: "booking.cancelled", locale: "de", subject: "Storno: {{booking.number}}", body: "Hallo {{customer.firstName}}, deine Buchung {{booking.number}} wurde storniert." },
       { organizationId: org.id, key: "waiver.missing", locale: "de", subject: "Waiver fehlt: {{booking.number}}", body: "Hallo {{customer.firstName}}, bitte unterschreibe die Teilnahmeerklärung für Buchung {{booking.number}} im Kundenportal." },
       { organizationId: org.id, key: "session.reminder", locale: "de", subject: "Erinnerung: {{booking.number}}", body: "Hallo {{customer.firstName}}, dein Kurs {{booking.number}} ist am {{session.date}} um {{session.time}} in {{location.name}}." },

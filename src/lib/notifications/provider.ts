@@ -5,6 +5,8 @@ export type NotificationPayload = {
   to: string;
   templateKey: string;
   locale?: string;
+  subject: string;
+  body: string;
   variables: Record<string, string>;
 };
 
@@ -18,12 +20,20 @@ function applyVars(template: string, variables: Record<string, string>) {
 
 export class ConsoleNotificationProvider implements NotificationProvider {
   async send(payload: NotificationPayload) {
-    logger.info("notification.console", payload as unknown as Record<string, unknown>);
+    logger.info("notification.console", {
+      to: payload.to,
+      templateKey: payload.templateKey,
+      subject: payload.subject,
+      body: payload.body,
+    });
   }
 }
 
 export class ResendNotificationProvider implements NotificationProvider {
-  constructor(private apiKey: string, private from: string) {}
+  constructor(
+    private apiKey: string,
+    private from: string,
+  ) {}
   async send(payload: NotificationPayload) {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -34,8 +44,12 @@ export class ResendNotificationProvider implements NotificationProvider {
       body: JSON.stringify({
         from: this.from,
         to: payload.to,
-        subject: payload.templateKey,
-        html: `<p>${applyVars("{{customer.firstName}}", payload.variables)}</p>`,
+        subject: payload.subject,
+        html: `<div style="font-family:sans-serif;line-height:1.5">${payload.body
+          .split("\n")
+          .map((line) => `<p>${line}</p>`)
+          .join("")}</div>`,
+        text: payload.body,
       }),
     });
     if (!res.ok) {
@@ -71,11 +85,22 @@ export async function sendTemplatedEmail(params: {
       },
     },
   });
+  const subject = template
+    ? applyVars(template.subject, params.variables)
+    : params.templateKey;
+  const body = template
+    ? applyVars(template.body, params.variables)
+    : Object.entries(params.variables)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join("\n");
+
   const provider = getNotificationProvider();
   await provider.send({
     to: params.to,
     templateKey: params.templateKey,
     locale,
+    subject,
+    body,
     variables: params.variables,
   });
   await prisma.notification.create({
@@ -84,15 +109,10 @@ export async function sendTemplatedEmail(params: {
       channel: "email",
       to: params.to,
       templateKey: params.templateKey,
-      payload: { subject: template?.subject, variables: params.variables },
+      payload: { subject, body, variables: params.variables },
       status: "sent",
       sentAt: new Date(),
     },
   });
-  return template
-    ? {
-        subject: applyVars(template.subject, params.variables),
-        body: applyVars(template.body, params.variables),
-      }
-    : null;
+  return { subject, body };
 }

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/card";
 import { CheckinButton } from "@/components/admin/checkin-button";
 import { RefundButton } from "@/components/admin/refund-button";
 import { VoucherRedeem } from "@/components/admin/voucher-redeem";
+import { BookingActions } from "@/components/admin/booking-actions";
 
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -38,6 +39,12 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         </p>
         <RefundButton bookingId={booking.id} maxAmount={Number(booking.amountPaid)} />
         {open > 0 && <VoucherRedeem bookingId={booking.id} />}
+        <BookingActions
+          bookingId={booking.id}
+          accessToken={booking.accessToken}
+          status={booking.status}
+          openAmount={open}
+        />
       </section>
       <section className="rounded-2xl bg-white p-5 shadow-sm">
         <h2 className="font-semibold">Teilnehmer</h2>
