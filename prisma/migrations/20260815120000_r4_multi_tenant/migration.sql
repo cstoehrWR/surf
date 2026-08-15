@@ -1,0 +1,2 @@
+-- Release 4: multi-tenant, sports, lodging (applied via prisma db push in cloud agent)
+-- Schema changes are represented in prisma/schema.prisma

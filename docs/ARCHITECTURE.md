@@ -169,7 +169,9 @@ tests/                 Vitest (Engine) + API-Tests
 
 **Release 3 (umgesetzt):** Advanced Pricing (Wochenende/Saison/Gruppe/Frühbucher/Last Minute), Warteliste mit Auto-Promote bei Storno, Reporting (Auslastung, Instructor, Filter/CSV), Webhook-Endpoints inkl. Delivery.
 
-**Später:** Partnerportal, Multi-Sport, Multi-Tenant-SaaS.
+**Release 4 (umgesetzt):** Multi-Tenant (Memberships, Org-Switcher, API-Scoping, öffentliche `/o/[slug]`-Seiten), Sportarten (`SportType`), Unterkunft/Camping mit Nacht-Availability (`LodgingUnit`/`LodgingNight`).
+
+**Später:** Partnerportal, White-Label, weitere Verticals.
 
 ---
 

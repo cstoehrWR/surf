@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { handleError, requirePermission } from "@/lib/api/guard";
+import { handleError, requireTenant } from "@/lib/api/guard";
 import { BookingStatus, PaymentStatus, SessionStatus } from "@prisma/client";
+import { orgWhere } from "@/lib/tenant/org";
 
 export async function GET(request: NextRequest) {
   try {
-    await requirePermission("reports.read");
+    const { organizationId } = await requireTenant("reports.read");
     const url = new URL(request.url);
     const from = url.searchParams.get("from");
     const to = url.searchParams.get("to");
@@ -14,9 +15,10 @@ export async function GET(request: NextRequest) {
       gte: from ? new Date(from) : new Date(new Date().getFullYear(), 0, 1),
       lte: to ? new Date(to) : new Date(),
     };
+    const scope = orgWhere(organizationId);
 
     const bookings = await prisma.booking.findMany({
-      where: { createdAt: range, status: { not: BookingStatus.CANCELLED } },
+      where: { ...scope, createdAt: range, status: { not: BookingStatus.CANCELLED } },
       include: {
         items: { include: { product: true, session: { include: { instructors: { include: { instructor: true } } } } } },
         location: true,
@@ -41,18 +43,21 @@ export async function GET(request: NextRequest) {
     }
 
     const cancelled = await prisma.booking.count({
-      where: { createdAt: range, status: BookingStatus.CANCELLED },
+      where: { ...scope, createdAt: range, status: BookingStatus.CANCELLED },
     });
     const noShows = await prisma.booking.count({
-      where: { createdAt: range, status: BookingStatus.NO_SHOW },
+      where: { ...scope, createdAt: range, status: BookingStatus.NO_SHOW },
     });
     const openPayments = await prisma.booking.aggregate({
-      where: { paymentStatus: { in: [PaymentStatus.UNPAID, PaymentStatus.PARTIALLY_PAID] } },
+      where: {
+        ...scope,
+        paymentStatus: { in: [PaymentStatus.UNPAID, PaymentStatus.PARTIALLY_PAID] },
+      },
       _sum: { total: true },
       _count: true,
     });
     const sessions = await prisma.courseSession.findMany({
-      where: { startsAt: range, status: { not: SessionStatus.CANCELLED } },
+      where: { ...scope, startsAt: range, status: { not: SessionStatus.CANCELLED } },
       include: { participants: true, product: true },
     });
     const occupancyByProduct: Record<string, { booked: number; capacity: number; pct: number }> = {};
@@ -67,7 +72,7 @@ export async function GET(request: NextRequest) {
       const cur = occupancyByProduct[key];
       cur.pct = cur.capacity ? Math.round((cur.booked / cur.capacity) * 100) : 0;
     }
-    const waitlist = await prisma.waitlistEntry.count({ where: { createdAt: range } });
+    const waitlist = await prisma.waitlistEntry.count({ where: { ...scope, createdAt: range } });
 
     const report = {
       revenue,

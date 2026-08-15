@@ -11,6 +11,7 @@ declare module "next-auth" {
       id: string;
       role: Role;
       organizationId?: string | null;
+      organizationName?: string | null;
     } & DefaultSession["user"];
   }
 }
@@ -22,7 +23,7 @@ async function isLocked(email: string) {
   const since = new Date(Date.now() - LOCKOUT_MINUTES * 60_000);
   const failures = await prisma.loginAttempt.count({
     where: { email, success: false, createdAt: { gte: since } },
-  });
+    });
   return failures >= MAX_ATTEMPTS;
 }
 
@@ -58,29 +59,66 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({
+          where: { email },
+          include: { organization: true, memberships: { include: { organization: true }, take: 1 } },
+        });
         const ok = user?.passwordHash ? bcrypt.compareSync(password, user.passwordHash) : false;
         await prisma.loginAttempt.create({
           data: { email, userId: user?.id, success: Boolean(ok && user?.active) },
         });
         if (!ok || !user?.active) return null;
 
+        const organizationId =
+          user.organizationId ?? user.memberships[0]?.organizationId ?? null;
+        const organizationName =
+          user.organization?.name ?? user.memberships[0]?.organization.name ?? null;
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
-          organizationId: user.organizationId,
+          organizationId,
+          organizationName,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = (user as { role: Role }).role;
         token.organizationId = (user as { organizationId?: string }).organizationId;
+        token.organizationName = (user as { organizationName?: string }).organizationName;
         token.sub = user.id;
+      }
+      if (trigger === "update" && session?.organizationId) {
+        const membership = await prisma.organizationMembership.findFirst({
+          where: {
+            userId: token.sub,
+            organizationId: session.organizationId as string,
+          },
+          include: { organization: true },
+        });
+        const isSuper = token.role === Role.SUPER_ADMIN;
+        if (membership || isSuper) {
+          token.organizationId = session.organizationId;
+          token.organizationName =
+            membership?.organization.name ??
+            (
+              await prisma.organization.findUnique({
+                where: { id: session.organizationId as string },
+              })
+            )?.name ??
+            null;
+          if (token.sub) {
+            await prisma.user.update({
+              where: { id: token.sub },
+              data: { organizationId: session.organizationId as string },
+            });
+          }
+        }
       }
       return token;
     },
@@ -89,6 +127,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.sub ?? "";
         session.user.role = (token.role as Role) ?? Role.CUSTOMER;
         session.user.organizationId = token.organizationId as string | null;
+        session.user.organizationName = (token.organizationName as string | null) ?? null;
       }
       return session;
     },

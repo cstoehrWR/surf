@@ -1,4 +1,4 @@
-import { PrismaClient, ProductType, ResourceStatus, Role, SurfLevel, BookingStatus, PaymentStatus, PaymentMethod, SessionStatus } from "@prisma/client";
+import { PrismaClient, ProductType, ResourceStatus, Role, SurfLevel, BookingStatus, PaymentStatus, PaymentMethod, SessionStatus, SportType, BookingMode } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { addMinutes } from "../src/lib/utils";
@@ -29,6 +29,8 @@ async function reset() {
     "WebhookDelivery",
     "WebhookEndpoint",
     "ResourceAssignment",
+    "LodgingNight",
+    "LodgingUnit",
     "SessionParticipant",
     "SessionInstructor",
     "WaiverSignature",
@@ -69,6 +71,7 @@ async function reset() {
     "BlackoutPeriod",
     "OpeningHours",
     "Season",
+    "OrganizationMembership",
     "User",
     "Location",
     "Organization",
@@ -89,6 +92,8 @@ async function main() {
       slug: "north-sea-surf",
       locale: "de",
       timezone: "Europe/Berlin",
+      tagline: "Wellen. Wind. Nordsee.",
+      sports: [SportType.SURF, SportType.SUP],
     },
   });
 
@@ -127,7 +132,7 @@ async function main() {
       role: Role.ADMIN,
     },
   });
-  await prisma.user.create({
+  const superAdmin = await prisma.user.create({
     data: {
       organizationId: org.id,
       name: "Super Admin",
@@ -136,7 +141,7 @@ async function main() {
       role: Role.SUPER_ADMIN,
     },
   });
-  await prisma.user.create({
+  const office = await prisma.user.create({
     data: {
       organizationId: org.id,
       name: "Nina Rezeption",
@@ -883,6 +888,127 @@ await prisma.automationRule.createMany({
     },
   });
 
+  const kite = await prisma.product.create({
+    data: {
+      organizationId: org.id,
+      locationId: location.id,
+      type: ProductType.GROUP_COURSE,
+      sportType: SportType.KITE,
+      bookingMode: BookingMode.SESSION,
+      slug: "kite-anfaenger",
+      name: "Kite Anfänger",
+      description: "Erste Flüge und Bodydrag – Einstieg in den Kitesport.",
+      category: "Kite",
+      durationMinutes: 180,
+      basePrice: 129,
+      maxParticipants: 4,
+      minAge: 14,
+      surfLevel: SurfLevel.BEGINNER,
+      bookingLeadHours: 4,
+      instructorRatio: 4,
+      weekdays: [0, 1, 2, 3, 4, 5, 6],
+      startTimes: ["11:00"],
+      published: true,
+    },
+  });
+  void kite;
+
+  // Second tenant: lodging / camping (Wiesmoor-ähnlich)
+  const stay = await prisma.organization.create({
+    data: {
+      name: "Wattenmeer Stay",
+      slug: "wattenmeer-stay",
+      locale: "de",
+      timezone: "Europe/Berlin",
+      tagline: "Übernachten an der Küste",
+      sports: [SportType.OTHER],
+    },
+  });
+  const stayLoc = await prisma.location.create({
+    data: {
+      organizationId: stay.id,
+      name: "Wiesmoor Campus",
+      slug: "wiesmoor",
+      address: "Wiesmoor",
+      openingHours: {
+        create: [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+          weekday,
+          openTime: "00:00",
+          closeTime: "23:59",
+        })),
+      },
+    },
+  });
+  const apartment = await prisma.product.create({
+    data: {
+      organizationId: stay.id,
+      locationId: stayLoc.id,
+      type: ProductType.ACCOMMODATION,
+      sportType: SportType.OTHER,
+      bookingMode: BookingMode.NIGHTLY,
+      slug: "ferienwohnung",
+      name: "Ferienwohnung",
+      description: "Gemütliche Wohnung für bis zu 4 Personen, Übernachtung pro Nacht.",
+      category: "Unterkunft",
+      durationMinutes: 1440,
+      basePrice: 89,
+      maxParticipants: 4,
+      minParticipants: 1,
+      weekdays: [0, 1, 2, 3, 4, 5, 6],
+      startTimes: [],
+      published: true,
+    },
+  });
+  const pitch = await prisma.product.create({
+    data: {
+      organizationId: stay.id,
+      locationId: stayLoc.id,
+      type: ProductType.CAMPING,
+      sportType: SportType.OTHER,
+      bookingMode: BookingMode.NIGHTLY,
+      slug: "stellplatz",
+      name: "Wohnmobil-Stellplatz",
+      description: "Stellplatz mit Strom, Preis pro Nacht.",
+      category: "Camping",
+      durationMinutes: 1440,
+      basePrice: 29,
+      maxParticipants: 4,
+      weekdays: [0, 1, 2, 3, 4, 5, 6],
+      startTimes: [],
+      published: true,
+    },
+  });
+  await prisma.lodgingUnit.createMany({
+    data: [
+      { organizationId: stay.id, locationId: stayLoc.id, productId: apartment.id, name: "Wohnung A", code: "APT-A", capacity: 4 },
+      { organizationId: stay.id, locationId: stayLoc.id, productId: apartment.id, name: "Wohnung B", code: "APT-B", capacity: 4 },
+      { organizationId: stay.id, locationId: stayLoc.id, productId: pitch.id, name: "Stellplatz 1", code: "PITCH-1", capacity: 4 },
+      { organizationId: stay.id, locationId: stayLoc.id, productId: pitch.id, name: "Stellplatz 2", code: "PITCH-2", capacity: 4 },
+      { organizationId: stay.id, locationId: stayLoc.id, productId: pitch.id, name: "Stellplatz 3", code: "PITCH-3", capacity: 4 },
+    ],
+  });
+  const stayAdmin = await prisma.user.create({
+    data: {
+      organizationId: stay.id,
+      name: "Stay Admin",
+      email: "admin@wattenmeer.example",
+      passwordHash,
+      role: Role.ADMIN,
+    },
+  });
+
+  await prisma.organizationMembership.createMany({
+    data: [
+      { organizationId: org.id, userId: admin.id, role: Role.ADMIN },
+      { organizationId: org.id, userId: superAdmin.id, role: Role.SUPER_ADMIN },
+      { organizationId: org.id, userId: office.id, role: Role.OFFICE },
+      { organizationId: org.id, userId: tomUser.id, role: Role.INSTRUCTOR },
+      { organizationId: stay.id, userId: stayAdmin.id, role: Role.ADMIN },
+      { organizationId: stay.id, userId: superAdmin.id, role: Role.SUPER_ADMIN },
+      { organizationId: stay.id, userId: admin.id, role: Role.ADMIN },
+    ],
+  });
+
   await prisma.auditLog.create({
     data: {
       organizationId: org.id,
@@ -890,12 +1016,14 @@ await prisma.automationRule.createMany({
       action: "seed",
       entityType: "Organization",
       entityId: org.id,
-      newValue: { demo: true },
+      newValue: { demo: true, tenants: ["north-sea-surf", "wattenmeer-stay"] },
     },
   });
 
-  console.log("Seed complete: North Sea Surf School / Nordstrand");
-  console.log("Login: admin@northseasurf.example / SurfDemo!2026");
+  console.log("Seed complete: North Sea Surf + Wattenmeer Stay");
+  console.log("Login Surf: admin@northseasurf.example / SurfDemo!2026");
+  console.log("Login Stay: admin@wattenmeer.example / SurfDemo!2026");
+  console.log("Orgs: /o/north-sea-surf  /o/wattenmeer-stay");
 }
 
 main()

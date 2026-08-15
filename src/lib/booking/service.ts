@@ -412,6 +412,9 @@ export async function cancelBooking(params: {
   });
 
   await prisma.sessionParticipant.deleteMany({ where: { bookingId: booking.id } });
+  await prisma.lodgingNight.deleteMany({
+    where: { bookingItem: { bookingId: booking.id } },
+  });
   await prisma.auditLog.create({
     data: {
       organizationId: booking.organizationId,

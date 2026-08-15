@@ -24,6 +24,21 @@ enum ProductType {
   ADDON
   VOUCHER
   PACKAGE
+  ACCOMMODATION
+  CAMPING
+}
+
+enum SportType {
+  SURF
+  KITE
+  SUP
+  WINDSURF
+  OTHER
+}
+
+enum BookingMode {
+  SESSION
+  NIGHTLY
 }
 
 enum SurfLevel {
@@ -101,17 +116,21 @@ enum CustomFieldEntity {
 }
 
 model Organization {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   name      String
-  slug      String   @unique
-  locale    String   @default("de")
-  timezone  String   @default("Europe/Berlin")
-  currency  String   @default("EUR")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  slug      String      @unique
+  locale    String      @default("de")
+  timezone  String      @default("Europe/Berlin")
+  currency  String      @default("EUR")
+  tagline   String?
+  sports    SportType[] @default([SURF])
+  active    Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   locations      Location[]
   users          User[]
+  memberships    OrganizationMembership[]
   customers      Customer[]
   products       Product[]
   instructors    Instructor[]
@@ -130,6 +149,8 @@ model Organization {
   notifications  Notification[]
   webhookEndpoints WebhookEndpoint[]
   seasons        Season[]
+  lodgingUnits   LodgingUnit[]
+  waitlist       WaitlistEntry[]
 }
 
 model Location {
@@ -152,6 +173,7 @@ model Location {
   seasons        Season[]
   instructorLinks InstructorLocation[]
   bookings       Booking[]
+  lodgingUnits   LodgingUnit[]
 
   @@unique([organizationId, slug])
 }
@@ -203,10 +225,23 @@ model User {
   updatedAt      DateTime  @updatedAt
 
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  memberships    OrganizationMembership[]
   accounts       Account[]
   instructor     Instructor?
   auditLogs      AuditLog[]
   loginAttempts  LoginAttempt[]
+}
+
+model OrganizationMembership {
+  id             String @id @default(cuid())
+  organizationId String
+  userId         String
+  role           Role  @default(ADMIN)
+  createdAt      DateTime @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
 }
 
 model Account {
@@ -343,6 +378,8 @@ model Product {
   organizationId        String
   locationId            String
   type                  ProductType
+  sportType             SportType  @default(SURF)
+  bookingMode           BookingMode @default(SESSION)
   slug                  String
   name                  String
   description           String      @db.Text
@@ -377,8 +414,38 @@ model Product {
   bookingItems BookingItem[]
   priceRules   PriceRule[]
   waiverLinks  WaiverTemplateProduct[]
+  lodgingUnits LodgingUnit[]
 
   @@unique([organizationId, slug])
+}
+
+model LodgingUnit {
+  id             String  @id @default(cuid())
+  organizationId String
+  locationId     String
+  productId      String
+  name           String
+  code           String
+  capacity       Int     @default(2)
+  active         Boolean @default(true)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  location       Location      @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  product        Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  nights         LodgingNight[]
+
+  @@unique([organizationId, code])
+}
+
+model LodgingNight {
+  id            String   @id @default(cuid())
+  unitId        String
+  bookingItemId String
+  night         DateTime @db.Date
+  unit          LodgingUnit @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  bookingItem   BookingItem  @relation(fields: [bookingItemId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, night])
+  @@index([night])
 }
 
 model ProductTranslation {
@@ -552,6 +619,8 @@ model BookingItem {
   productId      String
   variantId      String?
   sessionId      String?
+  checkIn        DateTime? @db.Date
+  checkOut       DateTime? @db.Date
   name           String
   quantity       Int     @default(1)
   unitPrice      Decimal @db.Decimal(10, 2)
@@ -562,6 +631,7 @@ model BookingItem {
   product        Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
   variant        ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
   session        CourseSession?  @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  lodgingNights  LodgingNight[]
 }
 
 model Participant {
@@ -742,6 +812,7 @@ model WaitlistEntry {
   holdUntil      DateTime?
   notifiedAt     DateTime?
   createdAt      DateTime @default(now())
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   session        CourseSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   customer       Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
+import { OrgSwitcher } from "@/components/admin/org-switcher";
 
 const links = [
   ["/admin", "Dashboard"],
@@ -19,6 +20,7 @@ const links = [
   ["/admin/vouchers", "Gutscheine"],
   ["/admin/automations", "Automationen"],
   ["/admin/webhooks", "Webhooks"],
+  ["/admin/organizations", "Organisationen"],
   ["/admin/reports", "Reports"],
 ];
 
@@ -32,10 +34,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-screen bg-slate-100 md:grid md:grid-cols-[240px_1fr]">
       <aside className="border-b border-slate-200 bg-teal-950 p-4 text-teal-50 md:min-h-screen md:border-b-0">
         <p className="text-xs uppercase tracking-widest text-teal-300">Backoffice</p>
-        <p className="mt-1 font-semibold">North Sea Surf</p>
+        <p className="mt-1 font-semibold">{session.user.organizationName ?? "Tenant"}</p>
         <p className="text-xs text-teal-200">
           {session.user.name} · {role}
         </p>
+        <OrgSwitcher />
         <nav className="mt-6 grid gap-1 text-sm">
           {links.map(([href, label]) => (
             <Link key={href} href={href} className="rounded-lg px-3 py-2 hover:bg-teal-800">

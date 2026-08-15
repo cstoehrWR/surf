@@ -50,7 +50,7 @@ type Person = {
   notes?: string;
 };
 
-export function BookingWizard() {
+export function BookingWizard({ orgSlug }: { orgSlug?: string } = {}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -76,24 +76,26 @@ export function BookingWizard() {
   const selectedSlot = slots.find((s) => s.startTime === startTime);
 
   useEffect(() => {
-    fetch("/api/locations")
+    const q = orgSlug ? `?org=${orgSlug}` : "";
+    fetch(`/api/locations${q}`)
       .then((r) => r.json())
       .then((d) => {
         setLocations(d.data ?? []);
         if (d.data?.[0]) setLocationId(d.data[0].id);
       });
-  }, []);
+  }, [orgSlug]);
 
   useEffect(() => {
     if (!locationId) return;
-    fetch(`/api/products?locationId=${locationId}`)
+    const org = orgSlug ? `&org=${orgSlug}` : "";
+    fetch(`/api/products?locationId=${locationId}${org}&bookingMode=SESSION`)
       .then((r) => r.json())
       .then((d) => {
         const list = (d.data ?? []) as Product[];
         setProducts(list.filter((p) => p.type !== "ADDON"));
         setAddons(list.filter((p) => p.type === "ADDON"));
       });
-  }, [locationId]);
+  }, [locationId, orgSlug]);
 
   useEffect(() => {
     if (!productId || !locationId || !date) return;

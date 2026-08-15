@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
-import { handleError, jsonError, requirePermission } from "@/lib/api/guard";
+import { handleError, jsonError, requirePermission, requireTenant } from "@/lib/api/guard";
 import { processQueuedWebhooks } from "@/lib/webhooks/dispatch";
+import { orgWhere } from "@/lib/tenant/org";
 
 const EVENT_OPTIONS = [
   "booking.created",
@@ -17,8 +18,9 @@ const EVENT_OPTIONS = [
 
 export async function GET() {
   try {
-    await requirePermission("settings.manage");
+    const { organizationId } = await requireTenant("settings.manage");
     const endpoints = await prisma.webhookEndpoint.findMany({
+      where: orgWhere(organizationId),
       include: {
         deliveries: { orderBy: { createdAt: "desc" }, take: 5 },
       },

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { handleError, jsonError, rateLimit, requirePermission } from "@/lib/api/guard";
+import { handleError, jsonError, rateLimit, requirePermission, requireTenant } from "@/lib/api/guard";
 import {
   joinWaitlist,
   listWaitlist,
@@ -11,10 +11,12 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requirePermission("bookings.read");
+    const { organizationId } = await requireTenant("bookings.read");
     const sessionId = new URL(request.url).searchParams.get("sessionId") ?? undefined;
-    const orgId = user.organizationId ?? (await prisma.organization.findFirstOrThrow()).id;
-    const data = await listWaitlist({ organizationId: orgId, sessionId });
+    const data = await listWaitlist({
+      organizationId: organizationId ?? (await prisma.organization.findFirstOrThrow()).id,
+      sessionId,
+    });
     return NextResponse.json({ data });
   } catch (error) {
     return handleError(error);

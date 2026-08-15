@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { addMinutes } from "@/lib/utils";
 import { createSessionSchema } from "@/lib/validation/schemas";
-import { handleError, jsonError, requirePermission } from "@/lib/api/guard";
+import { handleError, jsonError, requirePermission, requireTenant } from "@/lib/api/guard";
 import { SessionStatus } from "@prisma/client";
 import { auth } from "@/auth";
+import { orgWhere } from "@/lib/tenant/org";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -17,6 +18,13 @@ export async function GET(request: NextRequest) {
       return handleError(error);
     }
   }
+  const { organizationId } = await requireTenant(
+    session?.user.role === "INSTRUCTOR" ? "sessions.own" : "sessions.read",
+  ).catch(async () => {
+    const user = await requirePermission("sessions.own");
+    return { user, organizationId: user.organizationId ?? null };
+  });
+
   const url = new URL(request.url);
   const from = url.searchParams.get("from");
   const to = url.searchParams.get("to");
@@ -25,6 +33,7 @@ export async function GET(request: NextRequest) {
 
   const sessions = await prisma.courseSession.findMany({
     where: {
+      ...orgWhere(organizationId),
       locationId,
       startsAt: {
         gte: from ? new Date(from) : undefined,

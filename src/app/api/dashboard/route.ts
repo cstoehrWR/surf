@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { handleError, requirePermission } from "@/lib/api/guard";
+import { handleError, requireTenant } from "@/lib/api/guard";
 import { BookingStatus, PaymentStatus, ResourceStatus } from "@prisma/client";
 import { endOfDay, startOfDay } from "@/lib/utils";
+import { orgWhere } from "@/lib/tenant/org";
 
 export async function GET() {
   try {
-    await requirePermission("sessions.read");
+    const { organizationId } = await requireTenant("sessions.read");
     const from = startOfDay(new Date());
     const to = endOfDay(new Date());
+    const scope = orgWhere(organizationId);
 
     const sessions = await prisma.courseSession.findMany({
-      where: { startsAt: { gte: from, lte: to }, status: { not: "CANCELLED" } },
+      where: { ...scope, startsAt: { gte: from, lte: to }, status: { not: "CANCELLED" } },
       include: {
         participants: { include: { participant: { include: { waivers: true } }, booking: true } },
         instructors: { include: { instructor: true } },
@@ -25,6 +27,7 @@ export async function GET() {
 
     const paidBookings = await prisma.booking.findMany({
       where: {
+        ...scope,
         items: { some: { session: { startsAt: { gte: from, lte: to } } } },
         status: { not: BookingStatus.CANCELLED },
       },
@@ -43,22 +46,29 @@ export async function GET() {
       .filter((p) => !p.participant.dateOfBirth || !p.participant.wetsuitSize).length;
 
     const resourceIssues = await prisma.resource.count({
-      where: { status: { in: [ResourceStatus.DEFECT, ResourceStatus.MAINTENANCE, ResourceStatus.LOST] } },
+      where: {
+        ...scope,
+        status: { in: [ResourceStatus.DEFECT, ResourceStatus.MAINTENANCE, ResourceStatus.LOST] },
+      },
     });
 
     const upcoming = await prisma.booking.findMany({
-      where: { status: BookingStatus.CONFIRMED, createdAt: { gte: new Date(Date.now() - 86400000) } },
+      where: {
+        ...scope,
+        status: BookingStatus.CONFIRMED,
+        createdAt: { gte: new Date(Date.now() - 86400000) },
+      },
       include: { customer: true },
       take: 8,
       orderBy: { createdAt: "desc" },
     });
     const cancellations = await prisma.booking.findMany({
-      where: { status: BookingStatus.CANCELLED },
+      where: { ...scope, status: BookingStatus.CANCELLED },
       include: { customer: true },
       take: 5,
       orderBy: { updatedAt: "desc" },
     });
-    const waitlist = await prisma.waitlistEntry.count();
+    const waitlist = await prisma.waitlistEntry.count({ where: scope });
 
     const instructorLoad = sessions.flatMap((s) =>
       s.instructors.map((i) => ({

@@ -8,8 +8,25 @@ export async function GET(request: NextRequest) {
   }
   const { searchParams } = new URL(request.url);
   const locationId = searchParams.get("locationId") ?? undefined;
+  const organizationId = searchParams.get("organizationId") ?? undefined;
+  const orgSlug = searchParams.get("org") ?? undefined;
+  const sportType = searchParams.get("sportType") ?? undefined;
+  const bookingMode = searchParams.get("bookingMode") ?? undefined;
+
+  let orgId = organizationId;
+  if (!orgId && orgSlug) {
+    const org = await prisma.organization.findFirst({ where: { slug: orgSlug, active: true } });
+    orgId = org?.id;
+  }
+
   const products = await prisma.product.findMany({
-    where: { published: true, ...(locationId ? { locationId } : {}) },
+    where: {
+      published: true,
+      ...(locationId ? { locationId } : {}),
+      ...(orgId ? { organizationId: orgId } : {}),
+      ...(sportType ? { sportType: sportType as never } : {}),
+      ...(bookingMode ? { bookingMode: bookingMode as never } : {}),
+    },
     include: { variants: true, images: true, location: true },
     orderBy: { name: "asc" },
   });

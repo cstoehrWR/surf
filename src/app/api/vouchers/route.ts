@@ -2,14 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { createVoucher, redeemVoucher } from "@/lib/vouchers/service";
-import { handleError, jsonError, requirePermission } from "@/lib/api/guard";
+import { handleError, jsonError, requirePermission, requireTenant } from "@/lib/api/guard";
 import { PaymentMethod, VoucherType } from "@prisma/client";
 import { confirmBookingPayment } from "@/lib/booking/service";
+import { orgWhere } from "@/lib/tenant/org";
 
 export async function GET() {
   try {
-    await requirePermission("payments.read");
-    const data = await prisma.voucher.findMany({ orderBy: { code: "asc" } });
+    const { organizationId } = await requireTenant("payments.read");
+    const data = await prisma.voucher.findMany({
+      where: orgWhere(organizationId),
+      orderBy: { code: "asc" },
+    });
     return NextResponse.json({
       data: data.map((v) => ({
         ...v,

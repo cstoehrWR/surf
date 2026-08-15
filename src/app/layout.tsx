@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -8,14 +9,16 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "North Sea Surf School",
-  description: "Kurse, Verleih und Sessions an der Nordsee buchen.",
+  title: "Surf & Stay Platform",
+  description: "Kurse, Sportarten und Übernachtungen online buchen.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
-      <body className={`${outfit.variable} font-sans antialiased`}>{children}</body>
+      <body className={`${outfit.variable} font-sans antialiased`}>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

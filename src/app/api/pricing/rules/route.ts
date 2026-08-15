@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { handleError, jsonError, requirePermission } from "@/lib/api/guard";
+import { handleError, jsonError, requirePermission, requireTenant } from "@/lib/api/guard";
+import { orgWhere } from "@/lib/tenant/org";
 
 export async function GET(request: NextRequest) {
   try {
-    await requirePermission("products.read");
+    const { organizationId } = await requireTenant("products.read");
     const productId = new URL(request.url).searchParams.get("productId");
     const data = await prisma.priceRule.findMany({
-      where: productId ? { productId } : undefined,
+      where: {
+        ...orgWhere(organizationId),
+        ...(productId ? { productId } : {}),
+      },
       include: { product: { select: { id: true, name: true } } },
       orderBy: [{ priority: "asc" }, { name: "asc" }],
     });

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createBooking } from "@/lib/booking/service";
 import { createBookingSchema } from "@/lib/validation/schemas";
-import { handleError, jsonError, rateLimit, requireUser } from "@/lib/api/guard";
+import { handleError, jsonError, rateLimit, requireTenant, requireUser } from "@/lib/api/guard";
 import { prisma } from "@/lib/db";
 import { hasPermission } from "@/lib/rbac/permissions";
+import { orgWhere } from "@/lib/tenant/org";
 
 export async function GET(request: NextRequest) {
   const user = await requireUser().catch(() => null);
@@ -20,9 +21,19 @@ export async function GET(request: NextRequest) {
   }
 
   if (!user) return jsonError("Unauthorized", 401);
-  const where = user.role === "CUSTOMER" ? { customer: { email: user.email ?? "" } } : {};
+  if (user.role === "CUSTOMER") {
+    const bookings = await prisma.booking.findMany({
+      where: { customer: { email: user.email ?? "" } },
+      include: { customer: true, items: true, participants: true },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+    return NextResponse.json({ data: bookings.map(serializeBooking) });
+  }
+
+  const { organizationId } = await requireTenant("bookings.read");
   const bookings = await prisma.booking.findMany({
-    where,
+    where: orgWhere(organizationId),
     include: { customer: true, items: true, participants: true },
     orderBy: { createdAt: "desc" },
     take: 100,
