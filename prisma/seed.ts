@@ -519,10 +519,25 @@ async function main() {
       { organizationId: org.id, key: "booking.confirmed", locale: "en", subject: "Confirmed: {{booking.number}}", body: "Hi {{customer.firstName}}, booking {{booking.number}} on {{session.date}} at {{session.time}} in {{location.name}} is confirmed." },
       { organizationId: org.id, key: "booking.cancelled", locale: "de", subject: "Storno: {{booking.number}}", body: "Hallo {{customer.firstName}}, deine Buchung {{booking.number}} wurde storniert." },
       { organizationId: org.id, key: "waiver.missing", locale: "de", subject: "Waiver fehlt: {{booking.number}}", body: "Hallo {{customer.firstName}}, bitte unterschreibe die Teilnahmeerklärung für Buchung {{booking.number}} im Kundenportal." },
+      { organizationId: org.id, key: "session.reminder", locale: "de", subject: "Erinnerung: {{booking.number}}", body: "Hallo {{customer.firstName}}, dein Kurs {{booking.number}} ist am {{session.date}} um {{session.time}} in {{location.name}}." },
+      { organizationId: org.id, key: "session.followup", locale: "de", subject: "Danke: {{booking.number}}", body: "Hallo {{customer.firstName}}, danke für deinen Kurs {{booking.number}} in {{location.name}}." },
+      { organizationId: org.id, key: "payment.refunded", locale: "de", subject: "Rückerstattung: {{booking.number}}", body: "Hallo {{customer.firstName}}, für Buchung {{booking.number}} wurde eine Rückerstattung ausgeführt." },
     ],
   });
 
-  await prisma.automationRule.createMany({
+  
+  await prisma.voucher.create({
+    data: {
+      organizationId: org.id,
+      code: "WAVE50",
+      type: "VALUE",
+      originalValue: 50,
+      remainingValue: 50,
+      status: "active",
+    },
+  });
+
+await prisma.automationRule.createMany({
     data: [
       { organizationId: org.id, name: "Erinnerung 48h", trigger: "session.upcoming", offsetHours: -48, action: "email.reminder", active: true },
       { organizationId: org.id, name: "Waiver-Check 24h", trigger: "session.upcoming", offsetHours: -24, action: "email.waiver_missing", active: true },

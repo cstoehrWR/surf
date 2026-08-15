@@ -165,9 +165,9 @@ tests/                 Vitest (Engine) + API-Tests
 
 **Release 1:** Auth, RBAC, Org/Standort, Produkte/Varianten, Sessions, Kunden/Teilnehmer, Availability Engine, öffentliches Booking, einfache Preise, Stripe/Mock-Zahlung, Bestätigung, Admin-Dashboard, Session Planner.
 
-**Release 2 (umgesetzt):** Customer Portal (Teilnehmerdaten, Storno mit Frist, Restzahlung), digitale Waiver (Vorlagen, Guardian, Unveränderlichkeit, Version), Admin-Waiver-Übersicht, E-Mail-Templates Storno/Waiver.
+**Release 2 (umgesetzt):** Customer Portal, digitale Waiver, Materialausgabe/Check-in, E-Mail-Automationen, Gutscheine, Refunds.
 
-**Später:** Materialausgabe-Vollflow, E-Mail-Automation-Jobs, Gutscheine, Advanced Pricing, Warteliste, Partnerportal.
+**Später:** Advanced Pricing, Warteliste, Partnerportal, Multi-Sport.
 
 ---
 

@@ -14,6 +14,8 @@ const links = [
   ["/admin/resources", "Ressourcen"],
   ["/admin/customers", "Kunden"],
   ["/admin/waivers", "Waiver"],
+  ["/admin/vouchers", "Gutscheine"],
+  ["/admin/automations", "Automationen"],
   ["/admin/reports", "Reports"],
 ];
 
