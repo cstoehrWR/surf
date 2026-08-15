@@ -11,6 +11,8 @@ const links = [
   ["/admin/bookings/new", "Manuelle Buchung"],
   ["/admin/sessions", "Sessions"],
   ["/admin/products", "Produkte"],
+  ["/admin/locations", "Standorte"],
+  ["/admin/lodging", "Unterkunft"],
   ["/admin/pricing", "Preise"],
   ["/admin/instructors", "Surflehrer"],
   ["/admin/resources", "Ressourcen"],
