@@ -65,6 +65,7 @@ export const patchSessionSchema = z.object({
   instructorIds: z.array(z.string()).optional(),
   maxParticipants: z.coerce.number().int().min(1).optional(),
   notes: z.string().optional(),
+  notify: z.boolean().optional(),
 });
 
 export const createPaymentSchema = z.object({

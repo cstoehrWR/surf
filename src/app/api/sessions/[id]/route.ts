@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { addMinutes } from "@/lib/utils";
 import { patchSessionSchema } from "@/lib/validation/schemas";
 import { handleError, jsonError, requirePermission } from "@/lib/api/guard";
+import { sendTemplatedEmail } from "@/lib/notifications/provider";
 
 export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -38,7 +39,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     if (!parsed.success) return jsonError("Invalid payload", 400, parsed.error.flatten());
     const current = await prisma.courseSession.findUniqueOrThrow({
       where: { id },
-      include: { product: true, instructors: true },
+      include: {
+        product: true,
+        location: true,
+        instructors: true,
+        participants: { include: { booking: { include: { customer: true } } } },
+      },
     });
 
     const startsAt = parsed.data.startsAt ? new Date(parsed.data.startsAt) : current.startsAt;
@@ -77,7 +83,52 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         newValue: { startsAt: updated.startsAt, status: updated.status },
       },
     });
-    return NextResponse.json({ data: updated });
+
+    let notified = 0;
+    const shouldNotify =
+      parsed.data.notify &&
+      parsed.data.status &&
+      parsed.data.status !== current.status &&
+      (parsed.data.status === "CANCELLED" ||
+        parsed.data.status === "POSTPONED" ||
+        parsed.data.status === "WEATHER_CHECK");
+
+    if (shouldNotify) {
+      const templateKey =
+        parsed.data.status === "CANCELLED"
+          ? "session.cancelled"
+          : parsed.data.status === "POSTPONED"
+            ? "session.postponed"
+            : "session.weather_check";
+      const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+      const seen = new Set<string>();
+      for (const link of current.participants) {
+        const email = link.booking.customer.email;
+        if (seen.has(email)) continue;
+        seen.add(email);
+        await sendTemplatedEmail({
+          organizationId: current.organizationId,
+          to: email,
+          templateKey,
+          locale: link.booking.locale,
+          variables: {
+            "customer.firstName": link.booking.customer.firstName,
+            "booking.number": link.booking.number,
+            "session.date": updated.startsAt.toLocaleDateString("de-DE"),
+            "session.time": updated.startsAt.toLocaleTimeString("de-DE", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            "location.name": current.location.name,
+            "product.name": current.product.name,
+            "portal.url": `${appUrl}/portal/${link.booking.accessToken}`,
+          },
+        }).catch(() => null);
+        notified += 1;
+      }
+    }
+
+    return NextResponse.json({ data: { ...updated, notified } });
   } catch (error) {
     return handleError(error);
   }

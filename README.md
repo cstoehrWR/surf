@@ -66,6 +66,7 @@ Ohne `STRIPE_SECRET_KEY` bestätigt der Mock-Payment-Provider Buchungen direkt (
 - **Custom Domains:** Domain im Website-Editor eintragen; Middleware mappt Host → Tenant (z. B. `/book` statt `/o/slug/book`)
 - **Page Builder:** Blöcke Hero, Text, Kurse, CTA, Kontakt, FAQ, Team, Galerie, Bild + Reihenfolge
 - **Website-Extras:** Kontaktformular → Anfragen-Inbox, Bild-Upload, SEO-Titel, Booking/Stay im Tenant-Design
+- **Tresen:** Buchungsdetail mit Portal-Link, Barzahlung und Storno; Bestätigungsmail mit Portal-URL
 - **Später:** Partnerportal, TLS/DNS-Automatisierung, Drag-and-drop WYSIWYG
 
 ## Multi-Tenant

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/card";
 import { AttendanceToggle } from "@/components/admin/attendance-toggle";
 import { MaterialPanel } from "@/components/admin/material-panel";
 import { CheckinButton } from "@/components/admin/checkin-button";
+import { SessionStatusActions } from "@/components/admin/session-status-actions";
 
 export default async function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -49,6 +50,8 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           </Badge>
         </div>
       </div>
+
+      <SessionStatusActions sessionId={session.id} status={session.status} />
 
       <section className="overflow-auto rounded-2xl bg-white shadow-sm">
         <table className="w-full text-left text-sm">

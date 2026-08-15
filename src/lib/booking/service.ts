@@ -429,6 +429,22 @@ export async function cancelBooking(params: {
       newValue: { status: "CANCELLED", reason: params.reason },
     },
   });
+  const full = await prisma.booking.findUnique({
+    where: { id: booking.id },
+    include: { customer: true },
+  });
+  if (full?.customer?.email) {
+    await sendTemplatedEmail({
+      organizationId: booking.organizationId,
+      to: full.customer.email,
+      templateKey: "booking.cancelled",
+      locale: full.locale,
+      variables: {
+        "customer.firstName": full.customer.firstName,
+        "booking.number": full.number,
+      },
+    }).catch(() => null);
+  }
   await dispatchWebhook({
     organizationId: booking.organizationId,
     event: "booking.cancelled",
