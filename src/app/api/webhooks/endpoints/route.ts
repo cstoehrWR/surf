@@ -14,6 +14,7 @@ const EVENT_OPTIONS = [
   "waiver.signed",
   "waitlist.joined",
   "waitlist.promoted",
+  "contact.received",
 ];
 
 export async function GET() {

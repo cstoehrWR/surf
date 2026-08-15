@@ -1,7 +1,23 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getPublicSite, ensureSiteForOrganization } from "@/lib/site/service";
 import { TenantSiteShell, renderBlocks } from "@/components/site/tenant-site";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string; pageSlug: string }>;
+}): Promise<Metadata> {
+  const { slug, pageSlug } = await params;
+  const org = await getPublicSite(slug);
+  const page = org?.sitePages.find((p) => p.slug === pageSlug);
+  if (!org || !page) return { title: "Seite" };
+  return {
+    title: `${page.title} · ${org.name}`,
+    description: org.tagline ?? page.title,
+  };
+}
 
 export default async function OrgCmsPage({
   params,

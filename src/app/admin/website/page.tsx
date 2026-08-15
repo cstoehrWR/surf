@@ -148,6 +148,28 @@ export default function WebsiteAdminPage() {
               value={site.heroImageUrl ?? ""}
               onChange={(e) => setSite({ ...site, heroImageUrl: e.target.value })}
             />
+            <label className="mt-2 inline-block cursor-pointer text-xs text-teal-800 underline">
+              Bild hochladen
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const body = new FormData();
+                  body.append("file", file);
+                  const res = await fetch("/api/uploads", { method: "POST", body });
+                  const json = await res.json();
+                  if (res.ok && json.data?.url) {
+                    setSite({ ...site, heroImageUrl: json.data.url });
+                    setMsg(`Upload ok: ${json.data.url}`);
+                  } else {
+                    setMsg(json.error ?? "Upload fehlgeschlagen");
+                  }
+                }}
+              />
+            </label>
           </div>
           <div>
             <Label>E-Mail</Label>
@@ -329,7 +351,11 @@ export default function WebsiteAdminPage() {
                     </button>
                   </div>
                 </div>
-                <BlockEditor block={block} onChange={(content) => updateBlockLocal(block.id, content)} />
+                <BlockEditor
+                  block={block}
+                  onChange={(content) => updateBlockLocal(block.id, content)}
+                  onUploadMsg={setMsg}
+                />
                 <Button
                   className="mt-2"
                   variant="outline"
@@ -384,12 +410,22 @@ export default function WebsiteAdminPage() {
   );
 }
 
+async function uploadFile(file: File): Promise<string | null> {
+  const body = new FormData();
+  body.append("file", file);
+  const res = await fetch("/api/uploads", { method: "POST", body });
+  const json = await res.json();
+  return res.ok && json.data?.url ? String(json.data.url) : null;
+}
+
 function BlockEditor({
   block,
   onChange,
+  onUploadMsg,
 }: {
   block: Block;
   onChange: (content: Record<string, unknown>) => void;
+  onUploadMsg: (msg: string) => void;
 }) {
   const c = block.content;
   if (block.type === "FAQ" || block.type === "TEAM" || block.type === "GALLERY") {
@@ -418,6 +454,47 @@ function BlockEditor({
                 // keep typing invalid json
               }
             }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (block.type === "IMAGE") {
+    return (
+      <div className="grid gap-2">
+        <div>
+          <Label>imageUrl</Label>
+          <Input
+            value={String(c.imageUrl ?? "")}
+            onChange={(e) => onChange({ ...c, imageUrl: e.target.value })}
+          />
+          <label className="mt-2 inline-block cursor-pointer text-xs text-teal-800 underline">
+            Bild hochladen
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                const url = await uploadFile(file);
+                if (url) {
+                  onChange({ ...c, imageUrl: url });
+                  onUploadMsg(`Upload ok: ${url}`);
+                } else {
+                  onUploadMsg("Upload fehlgeschlagen");
+                }
+              }}
+            />
+          </label>
+        </div>
+        <div>
+          <Label>caption</Label>
+          <Input
+            value={String(c.caption ?? "")}
+            onChange={(e) => onChange({ ...c, caption: e.target.value })}
           />
         </div>
       </div>

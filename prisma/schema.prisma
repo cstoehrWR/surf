@@ -153,6 +153,7 @@ model Organization {
   waitlist       WaitlistEntry[]
   site           SiteSettings?
   sitePages      SitePage[]
+  contactMessages ContactMessage[]
 }
 
 model Location {
@@ -953,4 +954,19 @@ model SiteBlock {
   page      SitePage @relation(fields: [pageId], references: [id], onDelete: Cascade)
 
   @@index([pageId, sortOrder])
+}
+
+model ContactMessage {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  email          String
+  phone          String?
+  message        String   @db.Text
+  pageSlug       String?
+  status         String   @default("new")
+  createdAt      DateTime @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
 }

@@ -44,7 +44,11 @@ yarn-error.log*
 # vercel
 .vercel
 
-# typescript
+# uploaded tenant assets
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# typescript build info
 *.tsbuildinfo
 next-env.d.ts
 

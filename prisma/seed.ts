@@ -31,6 +31,7 @@ async function reset() {
     "SiteBlock",
     "SitePage",
     "SiteSettings",
+    "ContactMessage",
     "ResourceAssignment",
     "LodgingNight",
     "LodgingUnit",
@@ -536,6 +537,13 @@ async function main() {
         locale: "de",
         subject: "Platz frei: {{productName}}",
         body: "Hallo {{customer.firstName}}, für {{productName}} am {{startsAt}} ist ein Platz frei. Bitte buche innerhalb von {{holdHours}} Stunden unter /book.",
+      },
+      {
+        organizationId: org.id,
+        key: "contact.received",
+        locale: "de",
+        subject: "Neue Website-Anfrage",
+        body: "Neue Nachricht von {{customer.firstName}} ({{email}}): {{message}}",
       },
     ],
   });

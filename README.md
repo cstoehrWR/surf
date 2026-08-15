@@ -65,6 +65,7 @@ Ohne `STRIPE_SECRET_KEY` bestätigt der Mock-Payment-Provider Buchungen direkt (
 - **Website-CMS:** Jede Schule kann unter `/admin/website` eine komplette Website pflegen (Seiten, Blöcke, Farben) – öffentlich unter `/o/[slug]`
 - **Custom Domains:** Domain im Website-Editor eintragen; Middleware mappt Host → Tenant (z. B. `/book` statt `/o/slug/book`)
 - **Page Builder:** Blöcke Hero, Text, Kurse, CTA, Kontakt, FAQ, Team, Galerie, Bild + Reihenfolge
+- **Website-Extras:** Kontaktformular → Anfragen-Inbox, Bild-Upload, SEO-Titel, Booking/Stay im Tenant-Design
 - **Später:** Partnerportal, TLS/DNS-Automatisierung, Drag-and-drop WYSIWYG
 
 ## Multi-Tenant

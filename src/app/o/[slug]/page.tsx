@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getPublicSite, ensureSiteForOrganization } from "@/lib/site/service";
@@ -6,6 +7,20 @@ import { TenantSiteShell, renderBlocks } from "@/components/site/tenant-site";
 async function isCustomDomainRequest() {
   const h = await headers();
   return h.get("x-tenant-custom-domain") === "1";
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const org = await getPublicSite(slug);
+  if (!org) return { title: "Nicht gefunden" };
+  return {
+    title: `${org.name}${org.tagline ? ` · ${org.tagline}` : ""}`,
+    description: org.tagline ?? `Website und Buchung von ${org.name}`,
+  };
 }
 
 export default async function OrgLandingPage({ params }: { params: Promise<{ slug: string }> }) {

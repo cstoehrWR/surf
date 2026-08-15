@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { formatMoney } from "@/lib/utils";
 import { resolveCtaHref, sitePath } from "@/lib/site/domain";
+import { ContactForm } from "@/components/site/contact-form";
 
 type Org = {
+  id: string;
   slug: string;
   name: string;
   products: Array<{
@@ -203,6 +205,7 @@ export function renderBlocks(org: Org, blocks: Page["blocks"], customDomain = fa
                 {org.site?.contactPhone && <p>Telefon: {org.site.contactPhone}</p>}
                 {org.site?.address && <p>Adresse: {org.site.address}</p>}
               </div>
+              <ContactForm orgSlug={org.slug} organizationId={org.id} />
             </section>
           );
         }

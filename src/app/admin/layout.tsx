@@ -24,6 +24,7 @@ const links = [
   ["/admin/webhooks", "Webhooks"],
   ["/admin/organizations", "Organisationen"],
   ["/admin/website", "Website"],
+  ["/admin/inbox", "Anfragen"],
   ["/admin/reports", "Reports"],
 ];
 
