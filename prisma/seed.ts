@@ -28,6 +28,9 @@ async function reset() {
   const tables = [
     "WebhookDelivery",
     "WebhookEndpoint",
+    "SiteBlock",
+    "SitePage",
+    "SiteSettings",
     "ResourceAssignment",
     "LodgingNight",
     "LodgingUnit",
@@ -1009,6 +1012,29 @@ await prisma.automationRule.createMany({
     ],
   });
 
+  const { ensureSiteForOrganization } = await import("../src/lib/site/service");
+  await ensureSiteForOrganization({
+    organizationId: org.id,
+    name: org.name,
+    tagline: org.tagline,
+    contactEmail: "hello@northseasurf.example",
+  });
+  await ensureSiteForOrganization({
+    organizationId: stay.id,
+    name: stay.name,
+    tagline: stay.tagline,
+    contactEmail: "hello@wattenmeer.example",
+  });
+  await prisma.siteSettings.update({
+    where: { organizationId: stay.id },
+    data: {
+      primaryColor: "#0e7490",
+      accentColor: "#f59e0b",
+      address: "Wiesmoor Campus",
+      contactEmail: "hello@wattenmeer.example",
+    },
+  });
+
   await prisma.auditLog.create({
     data: {
       organizationId: org.id,
@@ -1016,14 +1042,14 @@ await prisma.automationRule.createMany({
       action: "seed",
       entityType: "Organization",
       entityId: org.id,
-      newValue: { demo: true, tenants: ["north-sea-surf", "wattenmeer-stay"] },
+      newValue: { demo: true, tenants: ["north-sea-surf", "wattenmeer-stay"], website: true },
     },
   });
 
-  console.log("Seed complete: North Sea Surf + Wattenmeer Stay");
+  console.log("Seed complete: North Sea Surf + Wattenmeer Stay (+ Websites)");
   console.log("Login Surf: admin@northseasurf.example / SurfDemo!2026");
   console.log("Login Stay: admin@wattenmeer.example / SurfDemo!2026");
-  console.log("Orgs: /o/north-sea-surf  /o/wattenmeer-stay");
+  console.log("Websites: /o/north-sea-surf  /o/wattenmeer-stay");
 }
 
 main()

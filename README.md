@@ -61,7 +61,9 @@ Ohne `STRIPE_SECRET_KEY` bestätigt der Mock-Payment-Provider Buchungen direkt (
 - **Release 2:** Customer Portal, Waiver, Materialausgabe/Check-in, E-Mail-Automationen, Gutscheine, Refunds
 - **Release 3:** Advanced Pricing, Warteliste, Reporting-Ausbau, Webhooks-Dispatch
 - **Release 4 (aktuell):** Multi-Tenant-SaaS, Sportarten (Surf/Kite/SUP), Unterkunft/Camping (Nacht-Buchung)
-- **Später:** Partnerportal, weitere Verticals
+- **Stammdaten-Pflege:** Kurse/Produkte, Sessions, Standorte, Ressourcen/Material, Surflehrer und Unterkunftseinheiten sind im Admin anlegbar/editierbar
+- **Website-CMS:** Jede Schule kann unter `/admin/website` eine komplette Website pflegen (Seiten, Blöcke, Farben) – öffentlich unter `/o/[slug]`
+- **Später:** Partnerportal, Custom Domains, weitere Verticals
 
 ## Multi-Tenant
 

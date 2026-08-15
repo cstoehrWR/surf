@@ -80,6 +80,12 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+    const { ensureSiteForOrganization } = await import("@/lib/site/service");
+    await ensureSiteForOrganization({
+      organizationId: org.id,
+      name: org.name,
+      tagline: org.tagline,
+    });
     return NextResponse.json({ data: org }, { status: 201 });
   } catch (error) {
     return handleError(error);

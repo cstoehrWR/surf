@@ -171,7 +171,9 @@ tests/                 Vitest (Engine) + API-Tests
 
 **Release 4 (umgesetzt):** Multi-Tenant (Memberships, Org-Switcher, API-Scoping, öffentliche `/o/[slug]`-Seiten), Sportarten (`SportType`), Unterkunft/Camping mit Nacht-Availability (`LodgingUnit`/`LodgingNight`).
 
-**Später:** Partnerportal, White-Label, weitere Verticals.
+**Website-CMS:** `SiteSettings` + `SitePage` + `SiteBlock` – Schulen pflegen Farben, Kontakt und Inhaltsblöcke (Hero, Text, Kurse, CTA, Kontakt) unter `/admin/website`. Öffentliche Site unter `/o/[slug]` und `/o/[slug]/p/[page]`. Custom Domains vorbereitet (`customDomain`).
+
+**Später:** Partnerportal, White-Label Domains live schalten, Drag-and-drop Page Builder.
 
 ---
 

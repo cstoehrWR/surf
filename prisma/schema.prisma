@@ -151,6 +151,8 @@ model Organization {
   seasons        Season[]
   lodgingUnits   LodgingUnit[]
   waitlist       WaitlistEntry[]
+  site           SiteSettings?
+  sitePages      SitePage[]
 }
 
 model Location {
@@ -903,4 +905,52 @@ model WebhookDelivery {
   attempts   Int      @default(0)
   createdAt  DateTime @default(now())
   endpoint   WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+}
+
+/// Tenant website (CMS): branding + pages + content blocks
+model SiteSettings {
+  id               String  @id @default(cuid())
+  organizationId   String  @unique
+  published        Boolean  @default(true)
+  primaryColor     String  @default("#0f766e")
+  accentColor      String  @default("#fbbf24")
+  logoUrl          String?
+  heroImageUrl     String?
+  contactEmail     String?
+  contactPhone     String?
+  address          String?
+  socialInstagram  String?
+  socialFacebook   String?
+  footerText       String?
+  showBookingCta   Boolean  @default(true)
+  customDomain     String? @unique
+  updatedAt        DateTime @updatedAt
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model SitePage {
+  id             String  @id @default(cuid())
+  organizationId String
+  slug           String
+  title          String
+  navLabel       String?
+  sortOrder      Int      @default(0)
+  published      Boolean  @default(true)
+  showInNav      Boolean  @default(true)
+  updatedAt      DateTime @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  blocks         SiteBlock[]
+
+  @@unique([organizationId, slug])
+}
+
+model SiteBlock {
+  id        String @id @default(cuid())
+  pageId    String
+  type      String
+  sortOrder Int    @default(0)
+  content   Json
+  page      SitePage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId, sortOrder])
 }

@@ -23,6 +23,7 @@ const links = [
   ["/admin/automations", "Automationen"],
   ["/admin/webhooks", "Webhooks"],
   ["/admin/organizations", "Organisationen"],
+  ["/admin/website", "Website"],
   ["/admin/reports", "Reports"],
 ];
 
