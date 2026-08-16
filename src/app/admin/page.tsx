@@ -1,17 +1,17 @@
 import { prisma } from "@/lib/db";
-import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { BookingStatus, PaymentStatus, ResourceStatus } from "@prisma/client";
 import { endOfDay, formatMoney, startOfDay } from "@/lib/utils";
+import { requireAdminOrg } from "@/lib/tenant/admin-scope";
+import Link from "next/link";
 
 export default async function AdminDashboard() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const { where } = await requireAdminOrg();
 
   const from = startOfDay(new Date());
   const to = endOfDay(new Date());
   const sessions = await prisma.courseSession.findMany({
-    where: { startsAt: { gte: from, lte: to }, status: { not: "CANCELLED" } },
+    where: { ...where, startsAt: { gte: from, lte: to }, status: { not: "CANCELLED" } },
     include: {
       product: true,
       location: true,
@@ -25,6 +25,7 @@ export default async function AdminDashboard() {
   const occupancy = capacity ? Math.round((participantCount / capacity) * 100) : 0;
   const todaysBookings = await prisma.booking.findMany({
     where: {
+      ...where,
       items: { some: { session: { startsAt: { gte: from, lte: to } } } },
       status: { not: BookingStatus.CANCELLED },
     },
@@ -36,21 +37,24 @@ export default async function AdminDashboard() {
   const missingWaivers = sessions.flatMap((s) => s.participants).filter((p) => p.participant.waivers.length === 0).length;
   const missingData = sessions.flatMap((s) => s.participants).filter((p) => !p.participant.wetsuitSize).length;
   const resourceIssues = await prisma.resource.count({
-    where: { status: { in: [ResourceStatus.DEFECT, ResourceStatus.MAINTENANCE, ResourceStatus.LOST] } },
+    where: {
+      ...where,
+      status: { in: [ResourceStatus.DEFECT, ResourceStatus.MAINTENANCE, ResourceStatus.LOST] },
+    },
   });
   const upcoming = await prisma.booking.findMany({
-    where: { status: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] } },
+    where: { ...where, status: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] } },
     include: { customer: true },
     orderBy: { createdAt: "desc" },
     take: 6,
   });
   const cancellations = await prisma.booking.findMany({
-    where: { status: BookingStatus.CANCELLED },
+    where: { ...where, status: BookingStatus.CANCELLED },
     include: { customer: true },
     take: 4,
     orderBy: { updatedAt: "desc" },
   });
-  const waitlist = await prisma.waitlistEntry.count();
+  const waitlist = await prisma.waitlistEntry.count({ where });
 
   const kpis = [
     { label: "Sessions", value: String(sessions.length) },
@@ -97,8 +101,10 @@ export default async function AdminDashboard() {
         <Box title="Kommende Buchungen">
           {upcoming.map((b) => (
             <p key={b.id} className="flex justify-between py-1 text-sm">
-              <span>{b.number}</span>
-              <span>{b.customer.lastName}</span>
+              <Link className="text-teal-800 underline" href={`/admin/bookings/${b.id}`}>
+                {b.number}
+              </Link>
+              <Link href={`/admin/customers/${b.customerId}`}>{b.customer.lastName}</Link>
             </p>
           ))}
         </Box>

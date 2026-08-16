@@ -2,9 +2,12 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Badge } from "@/components/ui/card";
 import { formatMoney } from "@/lib/utils";
+import { requireAdminOrg } from "@/lib/tenant/admin-scope";
 
 export default async function BookingsPage() {
+  const { where } = await requireAdminOrg();
   const bookings = await prisma.booking.findMany({
+    where,
     include: { customer: true, items: { include: { session: true } } },
     orderBy: { createdAt: "desc" },
     take: 80,
@@ -37,7 +40,9 @@ export default async function BookingsPage() {
                   </Link>
                 </td>
                 <td className="p-3">
-                  {b.customer.firstName} {b.customer.lastName}
+                  <Link className="underline" href={`/admin/customers/${b.customerId}`}>
+                    {b.customer.firstName} {b.customer.lastName}
+                  </Link>
                 </td>
                 <td className="p-3">
                   <Badge>{b.status}</Badge>

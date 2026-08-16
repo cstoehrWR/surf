@@ -1,24 +1,24 @@
 import { prisma } from "@/lib/db";
-import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { BookingStatus, PaymentStatus, SessionStatus } from "@prisma/client";
 import { formatMoney } from "@/lib/utils";
 import { hasPermission } from "@/lib/rbac/permissions";
+import { requireAdminOrg } from "@/lib/tenant/admin-scope";
 
 export default async function ReportsPage({
   searchParams,
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
-  const session = await auth();
-  if (!session?.user || !hasPermission(session.user.role, "reports.read")) redirect("/admin");
+  const { session, where } = await requireAdminOrg();
+  if (!hasPermission(session.user.role, "reports.read")) redirect("/admin");
   const sp = await searchParams;
   const from = sp.from ? new Date(sp.from) : new Date(new Date().getFullYear(), 0, 1);
   const to = sp.to ? new Date(sp.to) : new Date();
   const range = { gte: from, lte: to };
 
   const bookings = await prisma.booking.findMany({
-    where: { createdAt: range, status: { not: BookingStatus.CANCELLED } },
+    where: { ...where, createdAt: range, status: { not: BookingStatus.CANCELLED } },
     include: {
       items: { include: { product: true, session: { include: { instructors: { include: { instructor: true } } } } } },
       location: true,
@@ -39,16 +39,19 @@ export default async function ReportsPage({
     }
   }
   const cancelled = await prisma.booking.count({
-    where: { createdAt: range, status: BookingStatus.CANCELLED },
+    where: { ...where, createdAt: range, status: BookingStatus.CANCELLED },
   });
   const noShows = await prisma.booking.count({
-    where: { createdAt: range, status: BookingStatus.NO_SHOW },
+    where: { ...where, createdAt: range, status: BookingStatus.NO_SHOW },
   });
   const open = await prisma.booking.count({
-    where: { paymentStatus: { in: [PaymentStatus.UNPAID, PaymentStatus.PARTIALLY_PAID] } },
+    where: {
+      ...where,
+      paymentStatus: { in: [PaymentStatus.UNPAID, PaymentStatus.PARTIALLY_PAID] },
+    },
   });
   const sessions = await prisma.courseSession.findMany({
-    where: { startsAt: range, status: { not: SessionStatus.CANCELLED } },
+    where: { ...where, startsAt: range, status: { not: SessionStatus.CANCELLED } },
     include: { participants: true, product: true },
   });
   const occupancyByProduct: Record<string, { booked: number; capacity: number }> = {};
@@ -59,7 +62,7 @@ export default async function ReportsPage({
     cur.capacity += s.maxParticipants;
     occupancyByProduct[key] = cur;
   }
-  const waitlist = await prisma.waitlistEntry.count({ where: { createdAt: range } });
+  const waitlist = await prisma.waitlistEntry.count({ where: { ...where, createdAt: range } });
   const fromStr = from.toISOString().slice(0, 10);
   const toStr = to.toISOString().slice(0, 10);
 

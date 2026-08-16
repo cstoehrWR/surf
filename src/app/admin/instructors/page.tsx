@@ -17,11 +17,15 @@ type Instructor = {
   productTypes: Array<{ productType: string }>;
 };
 type Location = { id: string; name: string };
+type Absence = { id: string; startsAt: string; endsAt: string; reason: string | null };
 
 export default function InstructorsAdminPage() {
   const [items, setItems] = useState<Instructor[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [absences, setAbsences] = useState<Absence[]>([]);
+  const [absenceForm, setAbsenceForm] = useState({ startsAt: "", endsAt: "", reason: "" });
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -143,19 +147,98 @@ export default function InstructorsAdminPage() {
               Level {i.level} · max {i.maxWeeklyHours}h · {i.active ? "aktiv" : "inaktiv"}
             </p>
             <p className="text-sm">Standorte: {i.locations.map((l) => l.location.name).join(", ")}</p>
-            <button
-              className="mt-2 text-sm text-teal-800 underline"
-              onClick={async () => {
-                await fetch("/api/instructors", {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ id: i.id, active: !i.active }),
-                });
-                load();
-              }}
-            >
-              {i.active ? "Deaktivieren" : "Aktivieren"}
-            </button>
+            <div className="mt-2 flex flex-wrap gap-3 text-sm">
+              <button
+                className="text-teal-800 underline"
+                onClick={async () => {
+                  await fetch("/api/instructors", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: i.id, active: !i.active }),
+                  });
+                  load();
+                }}
+              >
+                {i.active ? "Deaktivieren" : "Aktivieren"}
+              </button>
+              <button
+                className="underline"
+                onClick={async () => {
+                  setExpanded(i.id);
+                  const res = await fetch(`/api/instructors/${i.id}/absences`);
+                  const json = await res.json();
+                  setAbsences(json.data ?? []);
+                  setAbsenceForm({ startsAt: "", endsAt: "", reason: "" });
+                }}
+              >
+                Abwesenheiten
+              </button>
+            </div>
+            {expanded === i.id ? (
+              <div className="mt-4 space-y-2 border-t border-slate-100 pt-3 text-sm">
+                <ul className="space-y-1">
+                  {absences.map((a) => (
+                    <li key={a.id} className="flex justify-between gap-2">
+                      <span>
+                        {new Date(a.startsAt).toLocaleString("de-DE")} –{" "}
+                        {new Date(a.endsAt).toLocaleString("de-DE")}
+                        {a.reason ? ` · ${a.reason}` : ""}
+                      </span>
+                      <button
+                        className="text-rose-700 underline"
+                        onClick={async () => {
+                          await fetch(`/api/instructors/${i.id}/absences?absenceId=${a.id}`, {
+                            method: "DELETE",
+                          });
+                          const res = await fetch(`/api/instructors/${i.id}/absences`);
+                          const json = await res.json();
+                          setAbsences(json.data ?? []);
+                        }}
+                      >
+                        Entfernen
+                      </button>
+                    </li>
+                  ))}
+                  {absences.length === 0 ? <li className="text-slate-500">Keine Abwesenheiten</li> : null}
+                </ul>
+                <div className="grid gap-2">
+                  <Input
+                    type="datetime-local"
+                    value={absenceForm.startsAt}
+                    onChange={(e) => setAbsenceForm({ ...absenceForm, startsAt: e.target.value })}
+                  />
+                  <Input
+                    type="datetime-local"
+                    value={absenceForm.endsAt}
+                    onChange={(e) => setAbsenceForm({ ...absenceForm, endsAt: e.target.value })}
+                  />
+                  <Input
+                    placeholder="Grund"
+                    value={absenceForm.reason}
+                    onChange={(e) => setAbsenceForm({ ...absenceForm, reason: e.target.value })}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      const res = await fetch(`/api/instructors/${i.id}/absences`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(absenceForm),
+                      });
+                      setMsg(res.ok ? "Abwesenheit gespeichert" : "Fehler");
+                      if (res.ok) {
+                        const list = await fetch(`/api/instructors/${i.id}/absences`);
+                        const json = await list.json();
+                        setAbsences(json.data ?? []);
+                        setAbsenceForm({ startsAt: "", endsAt: "", reason: "" });
+                      }
+                    }}
+                  >
+                    Abwesenheit hinzufügen
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </article>
         ))}
       </div>

@@ -1,16 +1,19 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { formatMoney } from "@/lib/utils";
 import { Badge } from "@/components/ui/card";
 import { CheckinButton } from "@/components/admin/checkin-button";
 import { RefundButton } from "@/components/admin/refund-button";
 import { VoucherRedeem } from "@/components/admin/voucher-redeem";
 import { BookingActions } from "@/components/admin/booking-actions";
+import { requireAdminOrg } from "@/lib/tenant/admin-scope";
 
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { where } = await requireAdminOrg();
   const { id } = await params;
-  const booking = await prisma.booking.findUnique({
-    where: { id },
+  const booking = await prisma.booking.findFirst({
+    where: { id, ...where },
     include: {
       customer: true,
       participants: { include: { sessions: true, waivers: true } },
@@ -31,7 +34,10 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
       </div>
       <section className="rounded-2xl bg-white p-5 shadow-sm">
         <p>
-          {booking.customer.firstName} {booking.customer.lastName} · {booking.customer.email}
+          <Link className="font-semibold text-teal-800 underline" href={`/admin/customers/${booking.customerId}`}>
+            {booking.customer.firstName} {booking.customer.lastName}
+          </Link>{" "}
+          · {booking.customer.email}
         </p>
         <p className="font-semibold">
           {formatMoney(Number(booking.total))} · bezahlt {formatMoney(Number(booking.amountPaid))}

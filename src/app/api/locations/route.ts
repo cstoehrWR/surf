@@ -20,7 +20,16 @@ export async function GET(request: NextRequest) {
   }
 
   const locations = await prisma.location.findMany({
-    where: { active: true, ...(orgId ? { organizationId: orgId } : {}) },
+    where: {
+      ...(admin ? {} : { active: true }),
+      ...(orgId ? { organizationId: orgId } : {}),
+    },
+    include: admin
+      ? {
+          openingHours: { orderBy: { weekday: "asc" } },
+          blackouts: { orderBy: { startsAt: "asc" }, take: 50 },
+        }
+      : undefined,
     orderBy: { name: "asc" },
   });
   return NextResponse.json({ data: locations });
@@ -67,9 +76,13 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    await requireTenant("settings.manage");
+    const { organizationId } = await requireTenant("settings.manage");
     const body = await request.json();
     const id = z.string().parse(body.id);
+    const existing = await prisma.location.findFirst({
+      where: { id, ...orgWhere(organizationId) },
+    });
+    if (!existing) return jsonError("Not found", 404);
     const location = await prisma.location.update({
       where: { id },
       data: {

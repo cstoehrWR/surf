@@ -72,9 +72,13 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    await requireTenant("staff.write");
+    const { organizationId } = await requireTenant("staff.write");
     const body = await request.json();
     const id = z.string().parse(body.id);
+    const existing = await prisma.instructor.findFirst({
+      where: { id, ...orgWhere(organizationId) },
+    });
+    if (!existing) return jsonError("Not found", 404);
     const instructor = await prisma.instructor.update({
       where: { id },
       data: {
