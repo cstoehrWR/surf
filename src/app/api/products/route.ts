@@ -81,6 +81,8 @@ const productSchema = z.object({
   instructorRatio: z.coerce.number().int().optional(),
   weekdays: z.array(z.coerce.number().int()).optional(),
   startTimes: z.array(z.string()).optional(),
+  seasonStart: z.string().optional().nullable(),
+  seasonEnd: z.string().optional().nullable(),
   published: z.boolean().optional(),
   variants: z
     .array(z.object({ name: z.string(), price: z.coerce.number().positive() }))
@@ -118,6 +120,8 @@ export async function POST(request: NextRequest) {
         instructorRatio: parsed.data.instructorRatio ?? 8,
         weekdays: parsed.data.weekdays ?? [0, 1, 2, 3, 4, 5, 6],
         startTimes: parsed.data.startTimes ?? ["10:00"],
+        seasonStart: parsed.data.seasonStart ? new Date(parsed.data.seasonStart) : null,
+        seasonEnd: parsed.data.seasonEnd ? new Date(parsed.data.seasonEnd) : null,
         published: parsed.data.published ?? true,
         variants: parsed.data.variants?.length
           ? { create: parsed.data.variants }

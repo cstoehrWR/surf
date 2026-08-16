@@ -40,6 +40,8 @@ const patchSchema = z.object({
   sportType: z.enum(["SURF", "KITE", "SUP", "WINDSURF", "OTHER"]).optional(),
   bookingMode: z.enum(["SESSION", "NIGHTLY"]).optional(),
   type: z.string().optional(),
+  seasonStart: z.string().optional().nullable(),
+  seasonEnd: z.string().optional().nullable(),
 });
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -55,7 +57,21 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     if (!parsed.success) return jsonError("Invalid payload", 400, parsed.error.flatten());
     const product = await prisma.product.update({
       where: { id },
-      data: parsed.data as never,
+      data: {
+        ...parsed.data,
+        seasonStart:
+          parsed.data.seasonStart === undefined
+            ? undefined
+            : parsed.data.seasonStart
+              ? new Date(parsed.data.seasonStart)
+              : null,
+        seasonEnd:
+          parsed.data.seasonEnd === undefined
+            ? undefined
+            : parsed.data.seasonEnd
+              ? new Date(parsed.data.seasonEnd)
+              : null,
+      } as never,
       include: { variants: true, location: true },
     });
     return NextResponse.json({

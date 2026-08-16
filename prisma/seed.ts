@@ -602,6 +602,15 @@ async function main() {
     },
   });
 
+  await prisma.discountCode.create({
+    data: {
+      organizationId: org.id,
+      code: "EARLY10",
+      percent: 10,
+      active: true,
+    },
+  });
+
 await prisma.automationRule.createMany({
     data: [
       { organizationId: org.id, name: "Erinnerung 48h", trigger: "session.upcoming", offsetHours: -48, action: "email.reminder", active: true },

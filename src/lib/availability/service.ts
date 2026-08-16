@@ -54,6 +54,13 @@ export async function buildAvailabilityContext(params: {
     include: { openingHours: true, blackouts: true },
   });
 
+  const seasons = await prisma.season.findMany({
+    where: {
+      organizationId: product.organizationId,
+      OR: [{ locationId: null }, { locationId: params.locationId }],
+    },
+  });
+
   const startsAt = atTime(params.date, params.startTime);
   const endsAt = addMinutes(startsAt, product.durationMinutes);
 
@@ -146,6 +153,11 @@ export async function buildAvailabilityContext(params: {
     now: params.now ?? new Date(),
     openingHours: location.openingHours,
     blackouts: location.blackouts,
+    seasons: seasons.map((s) => ({
+      startsOn: s.startsOn,
+      endsOn: s.endsOn,
+      locationId: s.locationId,
+    })),
     session: session
       ? {
           id: session.id,

@@ -8,6 +8,7 @@ import { computeAvailability } from "@/lib/availability/engine";
 import { calculatePrice } from "@/lib/pricing/engine";
 import { sendTemplatedEmail } from "@/lib/notifications/provider";
 import { dispatchWebhook } from "@/lib/webhooks/dispatch";
+import { applyDiscountToTotal, resolveDiscountCode } from "@/lib/discounts/service";
 
 export class BookingError extends Error {
   constructor(
@@ -58,6 +59,7 @@ export async function createBooking(params: {
   actorUserId?: string;
   ip?: string;
   locale?: string;
+  discountCode?: string;
 }) {
   if (!params.consents.agb || !params.consents.privacy || !params.consents.participation) {
     throw new BookingError("Consents required", "CONSENTS_REQUIRED");
@@ -180,7 +182,35 @@ export async function createBooking(params: {
       });
     }
 
-    const subtotal = price.lineTotal + addOnTotal;
+    const subtotalBeforeDiscount = price.lineTotal + addOnTotal;
+    let discountMeta: {
+      code: string;
+      percent: number | null;
+      amount: number | null;
+      discount: number;
+    } | null = null;
+    let subtotal = subtotalBeforeDiscount;
+    if (params.discountCode) {
+      const resolved = await resolveDiscountCode({
+        organizationId: product.organizationId,
+        code: params.discountCode,
+        date: params.date,
+        total: subtotalBeforeDiscount,
+      });
+      if (!resolved) {
+        throw new BookingError("Invalid discount code", "INVALID_DISCOUNT");
+      }
+      discountMeta = {
+        code: resolved.code,
+        percent: resolved.percent,
+        amount: resolved.amount,
+        discount: resolved.discount,
+      };
+      subtotal = applyDiscountToTotal(subtotalBeforeDiscount, {
+        percent: resolved.percent,
+        amount: resolved.amount,
+      });
+    }
     const taxTotal = Math.round(subtotal * (Number(product.taxRate) / (100 + Number(product.taxRate))) * 100) / 100;
 
     const existingCustomer = await tx.customer.findFirst({
@@ -219,6 +249,7 @@ export async function createBooking(params: {
         subtotal,
         taxTotal,
         total: subtotal,
+        notes: discountMeta ? `Rabatt ${discountMeta.code}: -${discountMeta.discount.toFixed(2)}€` : undefined,
         overrideReason: params.overrideReason,
         locale: params.locale ?? "de",
         participants: {

@@ -1,3 +1,5 @@
+# Local development stack (hot reload). For production see docker-compose.prod.yml and docs/DEPLOY.md.
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -45,7 +47,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     restart: unless-stopped
     depends_on:
       postgres:

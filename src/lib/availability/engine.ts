@@ -30,6 +30,7 @@ export type AvailabilityInput = {
   now: Date;
   openingHours: Array<{ weekday: number; openTime: string; closeTime: string }>;
   blackouts: Array<{ startsAt: Date; endsAt: Date }>;
+  seasons?: Array<{ startsOn: Date; endsOn: Date; locationId: string | null }>;
   session?: {
     id: string;
     maxParticipants: number;
@@ -108,6 +109,21 @@ export function computeAvailability(input: AvailabilityInput): AvailabilityResul
   const day = dateOnly(input.date);
   if (product.seasonStart && day < dateOnly(product.seasonStart)) reasons.push("outside_season");
   if (product.seasonEnd && day > dateOnly(product.seasonEnd)) reasons.push("outside_season");
+
+  const seasons = input.seasons ?? [];
+  if (seasons.length > 0) {
+    const applicable = seasons.filter(
+      (s) => !s.locationId || s.locationId === input.locationId,
+    );
+    if (applicable.length > 0) {
+      const inSeason = applicable.some((s) => {
+        const start = dateOnly(s.startsOn);
+        const end = dateOnly(s.endsOn);
+        return day >= start && day <= end;
+      });
+      if (!inSeason) reasons.push("outside_season");
+    }
+  }
 
   const hours = input.openingHours.find((h) => h.weekday === weekday);
   if (!hours) {

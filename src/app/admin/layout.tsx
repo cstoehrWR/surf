@@ -20,6 +20,8 @@ const links = [
   ["/admin/waitlist", "Warteliste"],
   ["/admin/waivers", "Waiver"],
   ["/admin/vouchers", "Gutscheine"],
+  ["/admin/discount-codes", "Rabattcodes"],
+  ["/admin/seasons", "Saisons"],
   ["/admin/automations", "Automationen"],
   ["/admin/webhooks", "Webhooks"],
   ["/admin/organizations", "Organisationen"],

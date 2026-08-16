@@ -43,6 +43,7 @@ export const createBookingSchema = z.object({
   source: z.string().optional(),
   overrideReason: z.string().max(500).optional(),
   locale: z.enum(["de", "en"]).optional(),
+  discountCode: z.string().min(2).max(40).optional(),
 });
 
 export const patchBookingSchema = z.object({

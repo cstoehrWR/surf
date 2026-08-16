@@ -38,6 +38,8 @@ export default function ProductsAdminPage() {
     durationMinutes: "120",
     maxParticipants: "8",
     startTimes: "10:00,14:00",
+    seasonStart: "",
+    seasonEnd: "",
     requirementTypeIds: [] as string[],
   });
 
@@ -153,6 +155,22 @@ export default function ProductsAdminPage() {
             <Label>Startzeiten (kommagetrennt)</Label>
             <Input value={form.startTimes} onChange={(e) => setForm({ ...form, startTimes: e.target.value })} />
           </div>
+          <div>
+            <Label>Saison von</Label>
+            <Input
+              type="date"
+              value={form.seasonStart}
+              onChange={(e) => setForm({ ...form, seasonStart: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label>Saison bis</Label>
+            <Input
+              type="date"
+              value={form.seasonEnd}
+              onChange={(e) => setForm({ ...form, seasonEnd: e.target.value })}
+            />
+          </div>
           <div className="md:col-span-3">
             <Label>Materialbedarf</Label>
             <div className="mt-1 flex flex-wrap gap-3 text-sm">
@@ -189,6 +207,8 @@ export default function ProductsAdminPage() {
                 durationMinutes: Number(form.durationMinutes),
                 maxParticipants: Number(form.maxParticipants),
                 startTimes: form.startTimes.split(",").map((s) => s.trim()).filter(Boolean),
+                seasonStart: form.seasonStart || null,
+                seasonEnd: form.seasonEnd || null,
                 category: form.type === "ACCOMMODATION" || form.type === "CAMPING" ? "Unterkunft" : "Kurse",
               }),
             });

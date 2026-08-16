@@ -14,10 +14,13 @@ Docker Compose für Postgres, Redis, MinIO und die App.
 
 ```bash
 cp .env.example .env
+# für lokale Entwicklung NODE_ENV=development und DEMO_MODE=true setzen
 docker compose up --build
 ```
 
 App: http://localhost:3000
+
+Produktion: siehe [`docs/DEPLOY.md`](docs/DEPLOY.md) (`docker-compose.prod.yml`).
 
 ## Lokal ohne Docker
 
@@ -69,7 +72,12 @@ Ohne `STRIPE_SECRET_KEY` bestätigt der Mock-Payment-Provider Buchungen direkt (
 - **Tresen:** Buchungsdetail mit Portal-Link, Barzahlung und Storno; Bestätigungsmail mit Portal-URL
 - **Session-Ops:** Wetter-Check / Verschieben / Absage mit Teilnehmer-Benachrichtigung
 - **Ops-Stammdaten:** Waiver-Vorlagen CRUD, Öffnungszeiten/Sperrzeiten, Lehrer-Abwesenheiten, Kunden-Detail, Tenant-Scoping im Admin
-- **Später:** Partnerportal, TLS/DNS-Automatisierung, Drag-and-drop WYSIWYG
+- **Automationen/Saisons/Rabatte:** Automationen CRUD, Saisons in Availability, Rabattcodes im Checkout
+- **Deploy:** `docker-compose.prod.yml`, `docs/DEPLOY.md`, Healthcheck mit DB, Cron `/api/cron/automations`
+
+## Deploy
+
+Siehe [`docs/DEPLOY.md`](docs/DEPLOY.md) – Produktion mit `docker compose -f docker-compose.prod.yml up -d --build`.
 
 ## Multi-Tenant
 

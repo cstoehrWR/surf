@@ -71,6 +71,8 @@ export function BookingWizard({ orgSlug }: { orgSlug?: string } = {}) {
   const [busy, setBusy] = useState(false);
   const [waitlistForm, setWaitlistForm] = useState({ email: "", firstName: "", lastName: "" });
   const [waitlistMsg, setWaitlistMsg] = useState<string | null>(null);
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountInfo, setDiscountInfo] = useState<string | null>(null);
 
   const product = products.find((p) => p.id === productId);
   const selectedSlot = slots.find((s) => s.startTime === startTime);
@@ -139,6 +141,7 @@ export function BookingWizard({ orgSlug }: { orgSlug?: string } = {}) {
           addOnProductIds: addonIds,
           customer,
           consents: { agb: true, privacy: true, participation: true },
+          discountCode: discountCode.trim() || undefined,
         }),
       });
       const json = await created.json();
@@ -431,6 +434,17 @@ export function BookingWizard({ orgSlug }: { orgSlug?: string } = {}) {
               <Label>Telefon</Label>
               <Input value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} />
             </div>
+          </div>
+          <div>
+            <Label>Rabattcode (optional)</Label>
+            <Input
+              value={discountCode}
+              onChange={(e) => {
+                setDiscountCode(e.target.value);
+                setDiscountInfo(null);
+              }}
+            />
+            {discountInfo ? <p className="mt-1 text-sm text-teal-800">{discountInfo}</p> : null}
           </div>
           <label className="flex gap-2 text-sm">
             <input type="checkbox" checked={consents.agb} onChange={(e) => setConsents({ ...consents, agb: e.target.checked })} />
