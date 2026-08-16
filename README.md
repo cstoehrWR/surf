@@ -74,6 +74,7 @@ Ohne `STRIPE_SECRET_KEY` bestätigt der Mock-Payment-Provider Buchungen direkt (
 - **Ops-Stammdaten:** Waiver-Vorlagen CRUD, Öffnungszeiten/Sperrzeiten, Lehrer-Abwesenheiten, Kunden-Detail, Tenant-Scoping im Admin
 - **Automationen/Saisons/Rabatte:** Automationen CRUD, Saisons in Availability, Rabattcodes im Checkout
 - **Deploy:** `docker-compose.prod.yml`, `docs/DEPLOY.md`, Healthcheck mit DB, Cron `/api/cron/automations`
+- **Online-Handbuch:** `/admin/hilfe` mit Screenshots (nur digital)
 
 ## Deploy
 

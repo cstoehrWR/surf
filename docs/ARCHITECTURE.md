@@ -18,7 +18,7 @@ Die Wiesmoor Ranch ist ein bestehendes Buchungssystem für Ferienwohnung und Cam
 | Kartendaten | Nie selbst gespeichert | Identisch, nur Stripe |
 | Admin | Geschützter interner Bereich | RBAC (Super Admin, Admin, Office, Instructor, Kunde) |
 | Kalender | iCal-Import/Export | Session Planner (Tag/Woche), Admin-Kalender |
-| E-Mail | SMTP | `NotificationProvider` (Console/Resend/SMTP) |
+| E-Mail | Resend | `NotificationProvider` (Console/Resend) |
 | DSGVO | Datenschutzerklärung, Auskunft/Löschung organisatorisch | Technische Grundlage: Consents, Audit, Export-Endpunkt, keine Gesundheitsdaten |
 
 **Bewusst übernommene Ansätze:** verbindliche Buchung erst nach Preisdarstellung, Gast-Checkout, Stripe-Abstraktion, Barzahlung, AGB/Datenschutz-Checkboxen, Admin-Bereich, keine Kreditkartendaten im eigenen System.

@@ -28,6 +28,7 @@ const links = [
   ["/admin/website", "Website"],
   ["/admin/inbox", "Anfragen"],
   ["/admin/reports", "Reports"],
+  ["/admin/hilfe", "Handbuch"],
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
