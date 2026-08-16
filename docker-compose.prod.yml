@@ -1,0 +1,84 @@
+# Production-oriented stack. Copy `.env.example` → `.env` and set secrets first.
+# Usage: docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-surf}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-surf}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-surf} -d ${POSTGRES_DB:-surf}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      APP_URL: ${APP_URL:?set APP_URL}
+      AUTH_URL: ${AUTH_URL:?set AUTH_URL}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-surf}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-surf}?schema=public
+      REDIS_URL: redis://redis:6379
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-resend}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:?set EMAIL_FROM}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      PAYMENTS_CURRENCY: ${PAYMENTS_CURRENCY:-eur}
+      CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
+      DEMO_MODE: ${DEMO_MODE:-false}
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-de}
+      TZ: ${TZ:-Europe/Berlin}
+      NEXT_PUBLIC_ROOT_DOMAIN: ${NEXT_PUBLIC_ROOT_DOMAIN:-}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+
+  # Optional: run every 15 minutes via host cron or an external scheduler hitting /api/cron/automations
+  # Alternative: use the cron service below with curl.
+  cron:
+    image: curlimages/curl:8.5.0
+    profiles: ["cron"]
+    depends_on:
+      - app
+    environment:
+      CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
+      APP_INTERNAL_URL: http://app:3000
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          curl -fsS -X POST -H "Authorization: Bearer $$CRON_SECRET" $$APP_INTERNAL_URL/api/cron/automations || true
+          sleep 900
+        done
+
+volumes:
+  postgres_data:
+  redis_data:

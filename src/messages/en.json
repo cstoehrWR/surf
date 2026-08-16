@@ -1,0 +1,51 @@
+{
+  "brand": "North Sea Surf School",
+  "tagline": "Waves. Wind. North Sea.",
+  "bookNow": "Book now",
+  "login": "Sign in",
+  "logout": "Sign out",
+  "steps": {
+    "location": "Location",
+    "product": "Course",
+    "date": "Date",
+    "time": "Time",
+    "count": "Participants",
+    "participants": "Participant details",
+    "addons": "Add-ons",
+    "terms": "Terms",
+    "payment": "Payment",
+    "done": "Confirmation"
+  },
+  "availability": {
+    "spots": "spots left",
+    "full": "Sold out",
+    "missing": "Resources missing"
+  },
+  "consent": {
+    "agb": "I accept the terms and conditions.",
+    "privacy": "I have read the privacy policy.",
+    "participation": "I accept the participation terms."
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "planner": "Session planner",
+    "calendar": "Calendar",
+    "bookings": "Bookings",
+    "products": "Products",
+    "sessions": "Sessions",
+    "instructors": "Instructors",
+    "resources": "Resources",
+    "customers": "Customers",
+    "reports": "Reports"
+  },
+  "kpis": {
+    "sessions": "Sessions",
+    "participants": "Participants",
+    "occupancy": "Occupancy",
+    "revenue": "Revenue",
+    "openPayments": "open payments",
+    "missingWaivers": "missing waivers",
+    "missingData": "missing participant data",
+    "resourceIssues": "resource issues"
+  }
+}
